@@ -1,103 +1,132 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import DeckGL from "@deck.gl/react";
+import { PointCloudLayer } from "@deck.gl/layers";
+import { LASLoader } from "@loaders.gl/las";
+import { load } from "@loaders.gl/core";
+
+interface PointData {
+  position: number[];
+  color: number[];
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [pointCloudData, setPointCloudData] = useState<PointData[]>([]);
+  const [status, setStatus] = useState<string>("Loading...");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  useEffect(() => {
+    const address = "1250 wildwood rd, boulder, CO";
+
+    fetch("http://localhost:8000/process", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ address }),
+    })
+      .then(async (res) => {
+        console.log("Response status:", res.status);
+        console.log("Response headers:", [...res.headers.entries()]);
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Error response body:", errorText);
+          throw new Error(
+            `HTTP ${res.status}: ${res.statusText} - ${errorText}`
+          );
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Success response:", data);
+        pollJobStatus(data.job_id);
+      })
+      .catch((error) => {
+        console.error("Fetch error:", error);
+        setStatus(`Error starting job: ${error.message}`);
+      });
+  }, []);
+
+  const pollJobStatus = async (id: string) => {
+    const poll = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/job/${id}`);
+        const job = await res.json();
+        setStatus(job.status);
+
+        if (job.status === "completed" && job.output_file) {
+          const fileRes = await fetch(`http://localhost:8000/download/${id}`);
+          const blob = await fileRes.blob();
+          const data = await load(blob, LASLoader);
+
+          const positions = data.attributes.POSITION.value;
+          const colors = data.attributes.COLOR_0?.value;
+          const numPoints = positions.length / 3; // Assuming x,y,z for each point
+          const pointData: PointData[] = [];
+
+          for (let i = 0; i < numPoints; i++) {
+            const posIdx = i * 3;
+            pointData.push({
+              position: [
+                positions[posIdx],
+                positions[posIdx + 1],
+                positions[posIdx + 2],
+              ],
+              color: colors
+                ? [colors[posIdx], colors[posIdx + 1], colors[posIdx + 2]]
+                : [255, 255, 255],
+            });
+          }
+
+          setPointCloudData(pointData);
+        } else if (job.status === "failed") {
+          setStatus("Failed: " + job.error_message);
+        } else if (job.status !== "completed") {
+          setTimeout(poll, 2000);
+        }
+      } catch {
+        setStatus("Polling error");
+      }
+    };
+    poll();
+  };
+
+  const layers = [
+    new PointCloudLayer({
+      id: "point-cloud",
+      data: pointCloudData,
+      getPosition: (d: PointData) => d.position as [number, number, number],
+      getColor: (d: PointData) => d.color as [number, number, number],
+      pointSize: 2,
+    }),
+  ];
+
+  return (
+    <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
+      <DeckGL
+        initialViewState={{
+          longitude: -105.2705,
+          latitude: 40.015,
+          zoom: 15,
+          pitch: 60,
+          bearing: 0,
+        }}
+        controller={true}
+        layers={layers}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 10,
+          background: "white",
+          padding: 10,
+        }}
+      >
+        Status: {status} | Points: {pointCloudData.length}
+      </div>
     </div>
   );
 }
