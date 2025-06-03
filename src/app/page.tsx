@@ -370,35 +370,16 @@ export default function Home() {
         layers={layers}
       />
       <div
-        style={{
-          position: "absolute",
-          top: 10,
-          left: 10,
-          background: "white",
-          padding: 10,
-        }}
+        className="absolute top-3 left-3 bg-white p-3 font-space-grotesk text-sm font-medium"
       >
         Status: {status} | Points: {pointCloudData.length}
       </div>
       <div
-        style={{
-          position: "absolute",
-          top: 50,
-          left: 10,
-          background: "white",
-          padding: 10,
-          borderRadius: 5,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        }}
+        className="absolute top-12 left-3 bg-white p-3 rounded-lg shadow-lg font-space-grotesk"
       >
         <label
           htmlFor="pointSize"
-          style={{
-            display: "block",
-            marginBottom: 5,
-            fontSize: 14,
-            fontWeight: "bold",
-          }}
+          className="block mb-1 text-sm font-bold"
         >
           Point Size: {pointSize}
         </label>
@@ -409,28 +390,19 @@ export default function Home() {
           max="50"
           value={pointSize}
           onChange={(e) => setPointSize(Number(e.target.value))}
-          style={{ width: 200 }}
+          className="w-48"
         />
       </div>
       {isDownloading && (
-        <div
-          style={{
-            position: "absolute",
-            top: 130,
-            left: 10,
-            background: "white",
-            padding: 10,
-            width: 300,
-          }}
-        >
-          <div>
+        <div className="absolute top-32 left-3 bg-white p-3 w-72 font-space-grotesk">
+          <div className="text-sm">
             Download in progress... {downloadProgress}% ({pointCloudData.length}{" "}
             points loaded)
           </div>
           <progress
             value={downloadProgress}
             max={100}
-            style={{ width: "100%" }}
+            className="w-full mt-2"
           />
         </div>
       )}

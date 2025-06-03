@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({
                      hover:bg-gray-600
                      focus:outline-none focus:ring-2 focus:ring-white
                      transition-all duration-200 cursor-pointer
-                     text-center"
+                     text-center font-space-grotesk"
             style={{ backgroundColor: "#3D3D3E" }}
           >
             {item}
