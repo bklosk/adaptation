@@ -6,6 +6,7 @@ import { PointCloudLayer } from "@deck.gl/layers";
 import { LASLoader } from "@loaders.gl/las";
 import { load } from "@loaders.gl/core";
 import proj4 from "proj4";
+import Header from "../components/Header";
 
 interface PointData {
   position: number[];
@@ -25,6 +26,7 @@ export default function Home() {
   const [status, setStatus] = useState<string>("Loading...");
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [pointSize, setPointSize] = useState<number>(10);
   const [viewState, setViewState] = useState({
     longitude: -105.2705,
     latitude: 40.015,
@@ -351,7 +353,7 @@ export default function Home() {
       data: pointCloudData.length > 0 ? pointCloudData : testData,
       getPosition: (d: PointData) => d.position as [number, number, number],
       getColor: (d: PointData) => d.color as [number, number, number],
-      pointSize: 10,
+      pointSize: pointSize,
       radiusMinPixels: 5,
       radiusMaxPixels: 100,
       visible: true,
@@ -360,6 +362,7 @@ export default function Home() {
 
   return (
     <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
+      <Header />
       <DeckGL
         viewState={viewState}
         onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
@@ -377,11 +380,43 @@ export default function Home() {
       >
         Status: {status} | Points: {pointCloudData.length}
       </div>
+      <div
+        style={{
+          position: "absolute",
+          top: 50,
+          left: 10,
+          background: "white",
+          padding: 10,
+          borderRadius: 5,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+      >
+        <label
+          htmlFor="pointSize"
+          style={{
+            display: "block",
+            marginBottom: 5,
+            fontSize: 14,
+            fontWeight: "bold",
+          }}
+        >
+          Point Size: {pointSize}
+        </label>
+        <input
+          id="pointSize"
+          type="range"
+          min="1"
+          max="50"
+          value={pointSize}
+          onChange={(e) => setPointSize(Number(e.target.value))}
+          style={{ width: 200 }}
+        />
+      </div>
       {isDownloading && (
         <div
           style={{
             position: "absolute",
-            top: 50,
+            top: 130,
             left: 10,
             background: "white",
             padding: 10,
