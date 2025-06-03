@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DeckGL from "@deck.gl/react";
 import { PointCloudLayer } from "@deck.gl/layers";
 import { LASLoader } from "@loaders.gl/las";
@@ -10,6 +10,14 @@ import proj4 from "proj4";
 interface PointData {
   position: number[];
   color: number[];
+}
+
+interface ViewState {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+  pitch: number;
+  bearing: number;
 }
 
 export default function Home() {
@@ -25,52 +33,31 @@ export default function Home() {
     bearing: 0,
   });
 
-  useEffect(() => {
-    const address = "1250 wildwood rd, boulder, CO";
-
-    fetch("http://localhost:8000/process", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ address }),
-    })
-      .then(async (res) => {
-        console.log("Response status:", res.status);
-        console.log("Response headers:", [...res.headers.entries()]);
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error("Error response body:", errorText);
-          throw new Error(
-            `HTTP ${res.status}: ${res.statusText} - ${errorText}`
-          );
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Success response:", data);
-        pollJobStatus(data.job_id);
-      })
-      .catch((error) => {
-        console.error("Fetch error:", error);
-        setStatus(`Error starting job: ${error.message}`);
-      });
-  }, []);
-
   const pollJobStatus = async (id: string) => {
-    const poll = async () => {
+    let pollCount = 0;
+    const maxPolls = 150; // Maximum 5 minutes of polling (150 * 2 seconds)
+
+    const poll = async (): Promise<void> => {
+      if (pollCount >= maxPolls) {
+        setStatus("Polling timeout - job may still be processing");
+        return;
+      }
+
+      pollCount++;
+
       try {
         const res = await fetch(`http://localhost:8000/job/${id}`);
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
         const job = await res.json();
         setStatus(job.status);
 
         if (job.status === "completed" && job.output_file) {
-          console.log("Job completed, downloading file...");
           setIsDownloading(true);
           const fileRes = await fetch(`http://localhost:8000/download/${id}`);
-          console.log("Download response status:", fileRes.status);
 
           const contentLength = fileRes.headers.get("Content-Length");
           const total = contentLength ? parseInt(contentLength, 10) : 0;
@@ -96,98 +83,155 @@ export default function Home() {
           }
 
           const blob = new Blob(chunks);
-          console.log("Blob size:", blob.size, "bytes");
-
           const data = await load(blob, LASLoader);
-          console.log("LAS data loaded:", data);
-          console.log("Available attributes:", Object.keys(data.attributes));
-          console.log("Full data structure:", data);
-
           const positions = data.attributes.POSITION?.value;
-          const colors = data.attributes.COLOR_0?.value;
-          console.log("Positions:", positions);
-          console.log("Positions array length:", positions?.length);
-          console.log("Colors array length:", colors?.length);
+
+          // Check for interleaved RGB data in COLOR_0 (most common format from @loaders.gl/las)
+          const colorValues = data.attributes.COLOR_0?.value;
+
+          // Try different possible color attribute names - LAS files use 'red', 'green', 'blue'
+          const redValues =
+            data.attributes.red?.value || data.attributes.Red?.value;
+          const greenValues =
+            data.attributes.green?.value || data.attributes.Green?.value;
+          const blueValues =
+            data.attributes.blue?.value || data.attributes.Blue?.value;
 
           if (!positions) {
-            console.error("No POSITION attribute found in LAS data");
             setStatus("Error: No position data found in LAS file");
             return;
           }
 
-          const numPoints = positions.length / 3; // Assuming x,y,z for each point
-          console.log("Number of points:", numPoints);
+          const numPoints = positions.length / 3;
+
+          // Determine color bit depth
+          let is16BitColors = false;
+
+          if (
+            colorValues &&
+            (colorValues.length === numPoints * 4 ||
+              colorValues.length === numPoints * 3)
+          ) {
+            // Check color value ranges to determine bit depth
+            let minColor = colorValues[0];
+            let maxColor = colorValues[0];
+            for (let i = 1; i < Math.min(colorValues.length, 1000); i++) {
+              if (colorValues[i] < minColor) minColor = colorValues[i];
+              if (colorValues[i] > maxColor) maxColor = colorValues[i];
+            }
+
+            is16BitColors = maxColor > 255;
+          }
 
           const pointData: PointData[] = [];
 
           for (let i = 0; i < numPoints; i++) {
             const posIdx = i * 3;
+
+            let pointColor: [number, number, number];
+
+            if (colorValues && colorValues.length === numPoints * 4) {
+              // Use interleaved RGBA data from COLOR_0 (4 values per point: R, G, B, A)
+              const colorIdx = i * 4;
+              const red = colorValues[colorIdx];
+              const green = colorValues[colorIdx + 1];
+              const blue = colorValues[colorIdx + 2];
+
+              // Convert based on detected bit depth
+              if (is16BitColors) {
+                // Convert from 16-bit (0-65535) to 8-bit (0-255) for DeckGL
+                pointColor = [
+                  Math.round((red / 65535) * 255),
+                  Math.round((green / 65535) * 255),
+                  Math.round((blue / 65535) * 255),
+                ];
+              } else {
+                // Values are already 8-bit (0-255), use them directly
+                pointColor = [red, green, blue];
+              }
+            } else if (colorValues && colorValues.length === numPoints * 3) {
+              // Use interleaved RGB data from COLOR_0 (3 values per point: R, G, B)
+              const colorIdx = i * 3;
+              const red = colorValues[colorIdx];
+              const green = colorValues[colorIdx + 1];
+              const blue = colorValues[colorIdx + 2];
+
+              // Convert based on detected bit depth
+              if (is16BitColors) {
+                // Convert from 16-bit (0-65535) to 8-bit (0-255) for DeckGL
+                pointColor = [
+                  Math.round((red / 65535) * 255),
+                  Math.round((green / 65535) * 255),
+                  Math.round((blue / 65535) * 255),
+                ];
+              } else {
+                // Values are already 8-bit (0-255), use them directly
+                pointColor = [red, green, blue];
+              }
+            } else if (redValues && greenValues && blueValues) {
+              const red = redValues[i];
+              const green = greenValues[i];
+              const blue = blueValues[i];
+
+              // Check if these are 16-bit values (likely if max > 255)
+              const maxSeparateColor = Math.max(red, green, blue);
+              if (maxSeparateColor > 255) {
+                // Convert from 16-bit (0-65535) to 8-bit (0-255) for DeckGL
+                pointColor = [
+                  Math.round((red / 65535) * 255),
+                  Math.round((green / 65535) * 255),
+                  Math.round((blue / 65535) * 255),
+                ];
+              } else {
+                // Values are already 8-bit (0-255), use them directly
+                pointColor = [red, green, blue];
+              }
+            } else if (redValues && redValues.length === numPoints * 3) {
+              // Fallback: treat redValues as interleaved RGB
+              const colorIdx = i * 3;
+              const red = redValues[colorIdx];
+              const green = redValues[colorIdx + 1];
+              const blue = redValues[colorIdx + 2];
+
+              // Check if these are 16-bit values
+              const maxInterleavedColor = Math.max(red, green, blue);
+              if (maxInterleavedColor > 255) {
+                pointColor = [
+                  Math.round((red / 65535) * 255),
+                  Math.round((green / 65535) * 255),
+                  Math.round((blue / 65535) * 255),
+                ];
+              } else {
+                pointColor = [red, green, blue];
+              }
+            } else {
+              // No color data, use white
+              pointColor = [255, 255, 255];
+            }
+
             pointData.push({
               position: [
                 positions[posIdx],
                 positions[posIdx + 1],
                 positions[posIdx + 2],
               ],
-              color: colors
-                ? [colors[posIdx], colors[posIdx + 1], colors[posIdx + 2]]
-                : [255, 255, 255],
+              color: pointColor,
             });
           }
 
-          console.log(
-            "Sample point data (first 3 points):",
-            pointData.slice(0, 3)
-          );
-          console.log("Point cloud data array length:", pointData.length);
-
-          // Check coordinate ranges to understand the data
+          // Check coordinate ranges and transform if necessary
           if (pointData.length > 0) {
             const xCoords = pointData.map((p) => p.position[0]);
             const yCoords = pointData.map((p) => p.position[1]);
-            const zCoords = pointData.map((p) => p.position[2]);
-
-            console.log(
-              "X coordinate range:",
-              Math.min(...xCoords),
-              "to",
-              Math.max(...xCoords)
-            );
-            console.log(
-              "Y coordinate range:",
-              Math.min(...yCoords),
-              "to",
-              Math.max(...yCoords)
-            );
-            console.log(
-              "Z coordinate range:",
-              Math.min(...zCoords),
-              "to",
-              Math.max(...zCoords)
-            );
-
-            // Calculate center point
             const centerX = (Math.min(...xCoords) + Math.max(...xCoords)) / 2;
             const centerY = (Math.min(...yCoords) + Math.max(...yCoords)) / 2;
-            console.log("Data center point:", centerX, centerY);
 
             // Check if these look like UTM coordinates (typically 6-7 digits)
-            const avgX = centerX;
-            const avgY = centerY;
-            console.log("Average coordinates:", avgX, avgY);
-
-            if (Math.abs(avgX) > 180 || Math.abs(avgY) > 90) {
-              console.warn(
-                "COORDINATE SYSTEM ISSUE: These look like projected coordinates (UTM), not lat/lon!"
-              );
-              console.warn("DeckGL expects longitude/latitude coordinates.");
-              console.warn("X (easting):", avgX, "Y (northing):", avgY);
-
+            if (Math.abs(centerX) > 180 || Math.abs(centerY) > 90) {
               // Assume UTM Zone 13N for Boulder, Colorado
               const utmProjection =
                 "+proj=utm +zone=13 +datum=WGS84 +units=m +no_defs";
               const wgs84Projection = "+proj=longlat +datum=WGS84 +no_defs";
-
-              console.log("Converting from UTM Zone 13N to WGS84...");
 
               // Transform all points
               const transformedPointData: PointData[] = pointData.map(
@@ -204,10 +248,6 @@ export default function Home() {
                 }
               );
 
-              console.log(
-                "Sample transformed coordinates:",
-                transformedPointData.slice(0, 3).map((p) => p.position)
-              );
               setPointCloudData(transformedPointData);
 
               // Update view to center on the data
@@ -216,19 +256,6 @@ export default function Home() {
                 const lats = transformedPointData.map((p) => p.position[1]);
                 const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
                 const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-                console.log("Setting view center to:", centerLon, centerLat);
-                console.log(
-                  "Lon range:",
-                  Math.min(...lons),
-                  "to",
-                  Math.max(...lons)
-                );
-                console.log(
-                  "Lat range:",
-                  Math.min(...lats),
-                  "to",
-                  Math.max(...lats)
-                );
                 setViewState((prev) => ({
                   ...prev,
                   longitude: centerLon,
@@ -237,7 +264,6 @@ export default function Home() {
                 }));
               }
             } else {
-              console.log("Coordinates appear to be in lat/lon format already");
               setPointCloudData(pointData);
             }
           }
@@ -246,14 +272,71 @@ export default function Home() {
         } else if (job.status === "failed") {
           setStatus("Failed: " + job.error_message);
         } else if (job.status !== "completed") {
-          setTimeout(poll, 2000);
+          // Continue polling with exponential backoff for retries
+          setTimeout(() => poll(), 2000);
         }
-      } catch {
-        setStatus("Polling error");
+      } catch (error) {
+        console.error("Polling error:", error);
+
+        // Handle network errors more gracefully
+        if (pollCount < 5) {
+          // Retry immediately for first few attempts
+          setTimeout(() => poll(), 3000);
+        } else {
+          // After several failures, show error but don't crash
+          setStatus(
+            `Connection error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }. Retrying...`
+          );
+          setTimeout(() => poll(), 5000);
+        }
       }
     };
+
+    // Start polling
     poll();
   };
+
+  const startNewJob = useCallback(async () => {
+    try {
+      setStatus("Starting new job...");
+
+      const response = await fetch("http://localhost:8000/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: "1250 Wildwood Road, Boulder, CO",
+          buffer_km: 1.0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to start job: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.job_id) {
+        pollJobStatus(result.job_id);
+      } else {
+        setStatus(`Failed to start job: ${result.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      setStatus(
+        `Error starting job: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    // Start a new job every time the page loads
+    startNewJob();
+  }, [startNewJob]);
 
   // Add test data to verify visualization works
   const testData: PointData[] = [
@@ -275,33 +358,11 @@ export default function Home() {
     }),
   ];
 
-  console.log("Current pointCloudData length:", pointCloudData.length);
-  console.log("Layers:", layers);
-
-  // Log some sample positions to debug coordinate system
-  if (pointCloudData.length > 0) {
-    console.log(
-      "First few positions:",
-      pointCloudData.slice(0, 5).map((d) => d.position)
-    );
-  }
-
-  console.log("Current pointCloudData length:", pointCloudData.length);
-  console.log("Layers:", layers);
-
-  // Log some sample positions to debug coordinate system
-  if (pointCloudData.length > 0) {
-    console.log(
-      "First few positions:",
-      pointCloudData.slice(0, 5).map((d) => d.position)
-    );
-  }
-
   return (
     <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
       <DeckGL
         viewState={viewState}
-        onViewStateChange={(evt) => setViewState(evt.viewState as any)}
+        onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
         controller={true}
         layers={layers}
       />
