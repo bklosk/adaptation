@@ -369,18 +369,11 @@ export default function Home() {
         controller={true}
         layers={layers}
       />
-      <div
-        className="absolute top-3 left-3 bg-white p-3 font-space-grotesk text-sm font-medium"
-      >
+      <div className="absolute top-3 left-3 bg-white p-3 font-space-grotesk text-sm font-medium">
         Status: {status} | Points: {pointCloudData.length}
       </div>
-      <div
-        className="absolute top-12 left-3 bg-white p-3 rounded-lg shadow-lg font-space-grotesk"
-      >
-        <label
-          htmlFor="pointSize"
-          className="block mb-1 text-sm font-bold"
-        >
+      <div className="absolute top-12 left-3 bg-white p-3 rounded-lg shadow-lg font-space-grotesk">
+        <label htmlFor="pointSize" className="block mb-1 text-sm font-bold">
           Point Size: {pointSize}
         </label>
         <input
