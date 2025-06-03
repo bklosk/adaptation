@@ -4,3 +4,4 @@ This is a nextjs project with tailwind. Do not write .css files, use tailwind cl
 The project uses TypeScript, so all files should have the .ts or .tsx extension as appropriate.
 The project uses the latest version of Next.js, so make sure to use the latest features and best practices.
 The project uses the latest version of Tailwind CSS, so make sure to use the latest features and best practices.
+To see endpoints available from the API, run the command `curl http://localhost:8000/` in the terminal and read the output from output.txt. The API is a RESTful API, so you can use the standard HTTP methods (GET, POST, PUT, DELETE) to interact with it. This API root endpoint returns openapi.json, which contains the API specification. You can use this to understand the available endpoints and their parameters.
