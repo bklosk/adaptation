@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Configuration
+
+### Mapbox Setup
+
+The satellite visualization requires a Mapbox access token. To set this up:
+
+1. Create a free account at [Mapbox](https://account.mapbox.com/)
+2. Create an access token at [https://account.mapbox.com/access-tokens/](https://account.mapbox.com/access-tokens/)
+3. Copy your access token
+4. Create a `.env.local` file in the project root (if it doesn't exist)
+5. Add your token to the file:
+
+```bash
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_actual_token_here
+```
+
+**Note:** Replace `your_actual_token_here` with your actual Mapbox access token.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

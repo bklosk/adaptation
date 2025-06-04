@@ -1,0 +1,208 @@
+"use client";
+
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+interface SatelliteVisualizationProps {
+  address: string;
+  imageSize?: string;
+}
+
+const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
+  address,
+}) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Geocode address to get coordinates
+  const geocodeAddress = async (
+    addressQuery: string
+  ): Promise<[number, number]> => {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        addressQuery
+      )}.json?access_token=${
+        process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+      }&limit=1`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to geocode address");
+    }
+
+    const data = await response.json();
+
+    if (!data.features || data.features.length === 0) {
+      throw new Error("Address not found");
+    }
+
+    return data.features[0].center; // [longitude, latitude]
+  };
+
+  const initializeMap = useCallback(async () => {
+    if (!address || !mapContainer.current) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [longitude, latitude] = await geocodeAddress(address);
+
+      // Clean up existing map
+      if (map.current) {
+        map.current.remove();
+      }
+
+      // Initialize new map
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/satellite-v9",
+        center: [longitude, latitude],
+        zoom: 18,
+        interactive: false, // Disable all interactions
+        attributionControl: false, // Remove attribution
+        logoPosition: "bottom-right", // Position logo (we'll hide it with CSS)
+      });
+
+      // Remove the Mapbox logo
+      map.current.on("load", () => {
+        const logo = document.querySelector(
+          ".mapboxgl-ctrl-logo"
+        ) as HTMLElement;
+        if (logo) {
+          logo.style.display = "none";
+        }
+      });
+    } catch (error) {
+      console.error("Failed to initialize map:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to load satellite view"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    initializeMap();
+
+    // Cleanup on unmount
+    return () => {
+      if (map.current) {
+        map.current.remove();
+      }
+    };
+  }, [initializeMap]);
+
+  // Hide any remaining Mapbox UI elements
+  useEffect(() => {
+    const hideMapboxUI = () => {
+      const elementsToHide = [
+        ".mapboxgl-ctrl-logo",
+        ".mapboxgl-ctrl-attrib",
+        ".mapboxgl-ctrl",
+        ".mapboxgl-canvas:focus",
+      ];
+
+      elementsToHide.forEach((selector) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el) => {
+          (el as HTMLElement).style.display = "none";
+        });
+      });
+    };
+
+    const timer = setTimeout(hideMapboxUI, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleRetry = () => {
+    initializeMap();
+  };
+
+  return (
+    <div className="h-full w-full bg-gray-100 flex flex-col">
+      {/* Header */}
+      <div className="p-4 bg-white shadow-sm border-b">
+        <h2 className="text-lg font-semibold text-gray-800 mb-1">
+          Satellite View
+        </h2>
+        <p className="text-sm text-gray-600 truncate">{address}</p>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 relative overflow-hidden">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+            <div className="text-center">
+              <div className="animate-spin h-8 w-8 border border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-gray-600">Loading satellite view...</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+            <div className="text-center p-6">
+              <div className="text-red-500 mb-4">
+                <svg
+                  className="h-12 w-12 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Failed to load satellite view
+              </h3>
+              <p className="text-gray-600 mb-4 max-w-md">{error}</p>
+              <button
+                onClick={handleRetry}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Map Container */}
+        <div
+          ref={mapContainer}
+          className="h-full w-full"
+          style={{
+            // Hide any remaining Mapbox UI elements
+            filter: "none",
+          }}
+        />
+      </div>
+
+      {/* Controls */}
+      {!isLoading && !error && (
+        <div className="p-3 bg-white border-t flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            Satellite imagery for location
+          </div>
+          <button
+            onClick={handleRetry}
+            className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SatelliteVisualization;

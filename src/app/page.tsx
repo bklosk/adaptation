@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import { PointCloudVisualization } from "../components/visualization";
-import OrthophotoVisualization from "../components/visualization/OrthophotoVisualization";
+import SatelliteVisualization from "../components/visualization/SatelliteVisualization";
 import LocationForm from "../components/LocationForm";
 
 export default function Home() {
@@ -129,9 +129,9 @@ export default function Home() {
                 />
               </div>
 
-              {/* Orthophoto Visualization - Right Side */}
+              {/* Satellite Visualization - Right Side */}
               <div className="w-1/3 h-full border-l border-gray-200">
-                <OrthophotoVisualization
+                <SatelliteVisualization
                   address={currentAddress}
                   imageSize="600,600"
                 />

@@ -17,3 +17,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
 }
+
+/* Hide all Mapbox UI elements */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl,
+.mapboxgl-canvas:focus {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.mapboxgl-canvas {
+  outline: none !important;
+}

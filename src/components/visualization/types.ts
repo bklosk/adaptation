@@ -28,12 +28,12 @@ export interface ProcessingRequest {
   buffer_km: number;
 }
 
-export interface OrthophotoRequest {
+export interface SatelliteRequest {
   address: string;
   image_size?: string;
 }
 
-export interface OrthophotoData {
+export interface SatelliteData {
   imageUrl: string;
   width: number;
   height: number;

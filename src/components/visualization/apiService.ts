@@ -1,4 +1,4 @@
-import { JobStatus, ProcessingRequest, OrthophotoRequest } from "./types";
+import { JobStatus, ProcessingRequest, SatelliteRequest } from "./types";
 
 export class PointCloudAPIService {
   private static readonly BASE_URL = "http://localhost:8000";
@@ -70,7 +70,7 @@ export class PointCloudAPIService {
     return new Blob(chunks);
   }
 
-  static async fetchOrthophoto(request: OrthophotoRequest): Promise<Blob> {
+  static async fetchSatelliteImage(request: SatelliteRequest): Promise<Blob> {
     const response = await fetch(`${this.BASE_URL}/orthophoto`, {
       method: "POST",
       headers: {
@@ -80,7 +80,7 @@ export class PointCloudAPIService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch orthophoto: ${response.status}`);
+      throw new Error(`Failed to fetch satellite image: ${response.status}`);
     }
 
     return await response.blob();
