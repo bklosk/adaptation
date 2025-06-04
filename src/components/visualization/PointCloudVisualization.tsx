@@ -375,38 +375,95 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         getCursor={() => "grab"}
       />
 
-      <KeyboardShortcuts />
+      {/* UI Overlay with proper positioning to avoid conflicts */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Top left - Keyboard shortcuts (positioned to avoid address box overlap) */}
+        <div className="absolute top-4 left-4 pointer-events-auto">
+          <KeyboardShortcuts />
+        </div>
 
-      <StatusDisplay
-        status={status}
-        pointCount={pointCloudData.length}
-        downloadProgress={downloadProgress}
-        isDownloading={isDownloading}
-        jobDetails={
-          jobDetails
-            ? {
-                ...jobDetails,
-                error_message: errorMessage || jobDetails.error_message,
-              }
-            : errorMessage
-            ? { error_message: errorMessage }
-            : undefined
-        }
-      />
-
-      {!isDownloading && (
-        <>
-          <PointSizeControl
-            pointSize={pointSize}
-            onPointSizeChange={setPointSize}
-          />
+        {/* Top right - Camera controls (hidden on mobile to avoid address overlap) */}
+        <div className="absolute top-4 right-4 pointer-events-auto hidden lg:block">
           <CameraControls
             viewState={viewState}
             onViewStateChange={handleViewStateUpdate}
             onResetView={resetView}
           />
-        </>
-      )}
+        </div>
+
+        {/* Bottom left - Status display */}
+        <div className="absolute bottom-4 left-4 pointer-events-auto max-w-sm">
+          <StatusDisplay
+            status={status}
+            pointCount={pointCloudData.length}
+            downloadProgress={downloadProgress}
+            isDownloading={isDownloading}
+            jobDetails={
+              jobDetails
+                ? {
+                    ...jobDetails,
+                    error_message: errorMessage || jobDetails.error_message,
+                  }
+                : errorMessage
+                ? { error_message: errorMessage }
+                : undefined
+            }
+          />
+        </div>
+
+        {/* Bottom right - Point size control */}
+        {!isDownloading && (
+          <div className="absolute bottom-4 right-4 pointer-events-auto">
+            <PointSizeControl
+              pointSize={pointSize}
+              onPointSizeChange={setPointSize}
+            />
+          </div>
+        )}
+
+        {/* Mobile camera controls - toggle button positioned below centered address */}
+        <div className="lg:hidden absolute top-20 right-4 pointer-events-auto">
+          <button
+            onClick={() => {
+              const controls = document.getElementById(
+                "mobile-camera-controls"
+              );
+              if (controls) {
+                controls.classList.toggle("hidden");
+              }
+            }}
+            className="backdrop-blur-sm p-2 shadow-lg hover:bg-gray-700 transition-all border-2 border-white font-space-grotesk"
+            style={{ backgroundColor: "#1B2223" }}
+            title="Camera Controls"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile camera controls panel positioned below toggle */}
+        <div
+          id="mobile-camera-controls"
+          className="lg:hidden hidden absolute top-32 right-4 pointer-events-auto"
+        >
+          <CameraControls
+            viewState={viewState}
+            onViewStateChange={handleViewStateUpdate}
+            onResetView={resetView}
+          />
+        </div>
+      </div>
     </div>
   );
 };

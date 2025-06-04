@@ -78,11 +78,11 @@ interface StatusIndicatorProps {
 
 const StatusIndicator = ({ status }: StatusIndicatorProps) => (
   <div className="flex items-center space-x-2">
-    <span className={`font-medium ${STATUS_COLORS[status]}`}>
+    <span className={`font-black ${STATUS_COLORS[status]} font-space-grotesk`}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
     {status === "processing" && (
-      <div className="animate-spin h-3 w-3 border border-blue-600 border-t-transparent rounded-full" />
+      <div className="animate-spin h-3 w-3 border border-blue-600 border-t-transparent" />
     )}
   </div>
 );
@@ -92,11 +92,14 @@ interface ProcessingDetailsProps {
 }
 
 const ProcessingDetails = ({ metadata }: ProcessingDetailsProps) => (
-  <div className="p-2 bg-blue-50 border border-blue-200 rounded">
-    <div className="font-semibold text-blue-700 text-xs mb-1">
+  <div
+    className="p-2 border-2 border-blue-400"
+    style={{ backgroundColor: "#1B2223" }}
+  >
+    <div className="font-black text-blue-400 text-xs mb-1 font-space-grotesk">
       Processing Details:
     </div>
-    <div className="space-y-1 text-xs text-blue-600">
+    <div className="space-y-1 text-xs text-gray-300 font-space-grotesk">
       {metadata.lidar_products_found && (
         <div className="flex justify-between">
           <span>LiDAR Products:</span>
@@ -140,9 +143,16 @@ interface ErrorDisplayProps {
 }
 
 const ErrorDisplay = ({ errorMessage }: ErrorDisplayProps) => (
-  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-    <div className="font-semibold text-red-700 text-xs">Error:</div>
-    <div className="text-red-600 text-xs mt-1">{errorMessage}</div>
+  <div
+    className="mt-2 p-2 border-2 border-red-400"
+    style={{ backgroundColor: "#1B2223" }}
+  >
+    <div className="font-black text-red-400 text-xs font-space-grotesk">
+      Error:
+    </div>
+    <div className="text-red-300 text-xs mt-1 font-space-grotesk">
+      {errorMessage}
+    </div>
   </div>
 );
 
@@ -151,11 +161,14 @@ interface BoundingBoxDisplayProps {
 }
 
 const BoundingBoxDisplay = ({ bbox }: BoundingBoxDisplayProps) => (
-  <div className="p-2 bg-green-50 border border-green-200 rounded">
-    <div className="font-semibold text-green-700 text-xs mb-1">
+  <div
+    className="p-2 border-2 border-green-400"
+    style={{ backgroundColor: "#1B2223" }}
+  >
+    <div className="font-black text-green-400 text-xs mb-1 font-space-grotesk">
       Coverage Area:
     </div>
-    <div className="text-xs text-green-600 font-mono break-all">{bbox}</div>
+    <div className="text-xs text-green-300 font-mono break-all">{bbox}</div>
   </div>
 );
 
@@ -165,16 +178,19 @@ interface DownloadProgressProps {
 }
 
 const DownloadProgress = ({ progress, pointCount }: DownloadProgressProps) => (
-  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur-sm p-4 w-80 font-space-grotesk rounded-lg shadow-lg z-10">
-    <div className="text-sm font-semibold text-gray-700 mb-2">
+  <div
+    className="absolute top-4 left-1/2 transform -translate-x-1/2 backdrop-blur-sm p-4 w-80 font-space-grotesk shadow-lg z-10 border-2 border-white"
+    style={{ backgroundColor: "#1B2223" }}
+  >
+    <div className="text-sm font-black text-white mb-2">
       Downloading Point Cloud Data
     </div>
-    <div className="text-xs text-gray-600 mb-3">
+    <div className="text-xs text-gray-300 mb-3">
       {progress}% complete ({pointCount.toLocaleString()} points)
     </div>
-    <div className="w-full bg-gray-200 rounded-full h-2">
+    <div className="w-full bg-gray-700 h-2 border border-white">
       <div
-        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+        className="bg-blue-600 h-full transition-all duration-300 border-r border-blue-400"
         style={{ width: `${progress}%` }}
       />
     </div>
@@ -196,17 +212,20 @@ export default function StatusDisplay({
 
   return (
     <>
-      {/* Main status display */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-4 font-space-grotesk text-sm rounded-lg shadow-lg z-10 max-w-sm">
+      {/* Main status display - no absolute positioning */}
+      <div
+        className="backdrop-blur-sm p-4 font-space-grotesk text-sm shadow-lg border-2 border-white w-full max-w-sm"
+        style={{ backgroundColor: "#1B2223" }}
+      >
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-gray-700">Status:</span>
+            <span className="font-black text-white">Status:</span>
             <StatusIndicator status={status} />
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-gray-700">Points:</span>
-            <span className="font-medium text-gray-900">
+            <span className="font-black text-white">Points:</span>
+            <span className="font-black text-white">
               {pointCount.toLocaleString()}
             </span>
           </div>
@@ -215,9 +234,9 @@ export default function StatusDisplay({
             <>
               {jobDetails.job_id && (
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-700">Job ID:</span>
+                  <span className="font-black text-white">Job ID:</span>
                   <span
-                    className="font-mono text-xs text-gray-600"
+                    className="font-mono text-xs text-gray-300"
                     title={jobDetails.job_id}
                   >
                     {jobDetails.job_id.slice(-8)}
@@ -227,18 +246,16 @@ export default function StatusDisplay({
 
               {elapsedTime && (
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-700">Elapsed:</span>
-                  <span className="font-medium text-gray-900">
-                    {elapsedTime}
-                  </span>
+                  <span className="font-black text-white">Elapsed:</span>
+                  <span className="font-black text-white">{elapsedTime}</span>
                 </div>
               )}
 
               {jobDetails.metadata?.processing_step &&
                 status === "processing" && (
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-700">Step:</span>
-                    <span className="font-medium text-blue-600 capitalize">
+                    <span className="font-black text-white">Step:</span>
+                    <span className="font-black text-blue-400 capitalize">
                       {jobDetails.metadata.processing_step.replace(/_/g, " ")}
                     </span>
                   </div>

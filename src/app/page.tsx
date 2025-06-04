@@ -42,18 +42,21 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ backgroundColor: "#1B2223" }}>
       <Header />
       {/* Main content with padding to account for fixed header */}
       <main className="pt-20">
         {!showVisualization ? (
-          <div className="min-h-[calc(100vh-5rem)] bg-gray-50 flex items-center justify-center p-4">
+          <div
+            className="min-h-[calc(100vh-5rem)] flex items-center justify-center p-4"
+            style={{ backgroundColor: "#1B2223" }}
+          >
             <div className="max-w-2xl w-full">
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                <h1 className="text-4xl font-black text-white mb-4 font-space-grotesk">
                   Point Cloud Visualization
                 </h1>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-300 font-space-grotesk">
                   Enter an address to generate and visualize 3D point cloud data
                   from geographical coordinates.
                 </p>
@@ -71,21 +74,25 @@ export default function Home() {
             {/* Back button */}
             <button
               onClick={handleNewSearch}
-              className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-2 rounded-lg shadow-md hover:bg-white transition-colors flex items-center gap-2 text-sm sm:px-4"
+              className="absolute top-4 left-4 z-20 backdrop-blur-sm text-white px-4 py-2 shadow-md hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-space-grotesk border-2 border-white"
+              style={{ backgroundColor: "#1B2223" }}
             >
               ← New Search
             </button>
 
-            {/* Current location info with edit button */}
-            <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-2 rounded-lg shadow-md max-w-xs sm:max-w-sm sm:px-4">
-              <div className="text-sm">
-                <div className="font-medium truncate">{currentAddress}</div>
-                <div className="text-gray-500 mb-2">
+            {/* Current location info with edit button - centered at top to avoid all UI conflicts */}
+            <div
+              className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 backdrop-blur-sm text-white px-4 py-2 shadow-md max-w-xs sm:max-w-sm border-2 border-white"
+              style={{ backgroundColor: "#1B2223" }}
+            >
+              <div className="text-sm font-space-grotesk text-center">
+                <div className="font-black truncate">{currentAddress}</div>
+                <div className="text-gray-300 mb-2">
                   Radius: {currentBufferKm} km
                 </div>
                 <button
                   onClick={handleEditLocation}
-                  className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                  className="text-blue-400 hover:text-blue-300 text-xs font-bold"
                 >
                   Edit Location
                 </button>
@@ -98,7 +105,8 @@ export default function Home() {
                 <div className="relative max-w-md w-full">
                   <button
                     onClick={() => setShowEditForm(false)}
-                    className="absolute -top-3 -right-3 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-700 z-10 shadow-lg"
+                    className="absolute -top-3 -right-3 text-white w-8 h-8 flex items-center justify-center hover:bg-gray-700 z-10 shadow-lg border-2 border-white font-space-grotesk font-black"
+                    style={{ backgroundColor: "#1B2223" }}
                   >
                     ×
                   </button>
@@ -112,10 +120,10 @@ export default function Home() {
               </div>
             )}
 
-            {/* Split layout for point cloud and orthophoto */}
+            {/* Split layout with point cloud on left, satellite and flood risk on right */}
             <div className="flex h-full">
               {/* Point Cloud Visualization - Left Side */}
-              <div className="w-2/3 h-full">
+              <div className="w-1/2 h-full">
                 <PointCloudVisualization
                   address={currentAddress}
                   bufferKm={currentBufferKm}
@@ -129,12 +137,56 @@ export default function Home() {
                 />
               </div>
 
-              {/* Satellite Visualization - Right Side */}
-              <div className="w-1/3 h-full border-l border-gray-200">
-                <SatelliteVisualization
-                  address={currentAddress}
-                  imageSize="600,600"
-                />
+              {/* Right panel with satellite view and flood risk */}
+              <div
+                className="w-1/2 h-full flex flex-col border-l-2 border-white"
+                style={{ backgroundColor: "#1B2223" }}
+              >
+                {/* Satellite Visualization - Top Right (Landscape - 3/5 height) */}
+                <div className="h-3/5 border-b-2 border-white">
+                  <SatelliteVisualization
+                    address={currentAddress}
+                    imageSize="800,600"
+                  />
+                </div>
+
+                {/* Flood Risk Placeholder - Bottom Right (2/5 height) */}
+                <div
+                  className="h-2/5 flex items-center justify-center border-2 border-white border-t-0"
+                  style={{ backgroundColor: "#1B2223" }}
+                >
+                  <div className="text-center p-6">
+                    <div className="mb-4">
+                      <svg
+                        className="h-12 w-12 mx-auto text-blue-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.5 3.5 0 001.481-6.687 3.5 3.5 0 00-1.481-6.687H6.75a4.5 4.5 0 00-4.5 4.5v3z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v6m3-3H9"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-black text-white mb-2 font-space-grotesk">
+                      Flood Risk Analysis
+                    </h3>
+                    <p className="text-sm text-gray-300 font-space-grotesk">
+                      Comprehensive flood risk assessment for this location
+                    </p>
+                    <div className="mt-4 text-xs text-gray-400 font-space-grotesk">
+                      Coming Soon
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

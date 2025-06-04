@@ -14,8 +14,14 @@ const PointSizeControl: React.FC<PointSizeControlProps> = ({
   maxSize = 50,
 }) => {
   return (
-    <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg font-space-grotesk z-10">
-      <label htmlFor="pointSize" className="block mb-1 text-sm font-bold">
+    <div
+      className="backdrop-blur-sm p-3 shadow-lg font-space-grotesk border-2 border-white w-full max-w-xs"
+      style={{ backgroundColor: "#1B2223" }}
+    >
+      <label
+        htmlFor="pointSize"
+        className="block mb-1 text-sm font-black text-white"
+      >
         Point Size: {pointSize}
       </label>
       <input
@@ -25,7 +31,7 @@ const PointSizeControl: React.FC<PointSizeControlProps> = ({
         max={maxSize}
         value={pointSize}
         onChange={(e) => onPointSizeChange(Number(e.target.value))}
-        className="w-48"
+        className="w-full"
       />
     </div>
   );

@@ -102,9 +102,12 @@ const LocationForm: React.FC<LocationFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <MapPinIcon className="h-5 w-5 text-blue-600" />
+    <div
+      className="shadow-lg p-6 max-w-md mx-auto border-2 border-white"
+      style={{ backgroundColor: "#1B2223" }}
+    >
+      <h2 className="text-xl font-black text-white mb-4 flex items-center gap-2 font-space-grotesk">
+        <MapPinIcon className="h-5 w-5 text-blue-400" />
         Location Settings
       </h2>
 
@@ -112,7 +115,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
         <div>
           <label
             htmlFor="address"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-bold text-white mb-2 font-space-grotesk"
           >
             Address
           </label>
@@ -122,16 +125,18 @@ const LocationForm: React.FC<LocationFormProps> = ({
             value={address}
             onChange={handleAddressChange}
             placeholder="Enter an address (e.g., 1250 Wildwood Road, Boulder, CO)"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-colors ${
+            className={`w-full px-3 py-2 border-2 shadow-sm focus:outline-none transition-colors font-space-grotesk ${
               addressError
-                ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                ? "border-red-400 focus:border-red-500 bg-red-50"
+                : "border-white focus:border-blue-400 bg-white"
             }`}
             disabled={isLoading}
             required
           />
           {addressError && (
-            <p className="mt-1 text-sm text-red-600">{addressError}</p>
+            <p className="mt-1 text-sm text-red-400 font-space-grotesk">
+              {addressError}
+            </p>
           )}
         </div>
 
@@ -139,7 +144,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors font-space-grotesk"
           >
             <CogIcon className="h-4 w-4" />
             Advanced Settings
@@ -154,10 +159,10 @@ const LocationForm: React.FC<LocationFormProps> = ({
         </div>
 
         {showAdvanced && (
-          <div className="border-t pt-4">
+          <div className="border-t-2 border-white pt-4">
             <label
               htmlFor="bufferKm"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-bold text-white mb-2 font-space-grotesk"
             >
               Search Radius (km)
             </label>
@@ -169,10 +174,10 @@ const LocationForm: React.FC<LocationFormProps> = ({
               min="0.1"
               max="10"
               step="0.1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border-2 border-white shadow-sm focus:outline-none focus:border-blue-400 bg-white font-space-grotesk"
               disabled={isLoading}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-300 mt-1 font-space-grotesk">
               Area around the address to search for point cloud data
             </p>
           </div>
@@ -181,11 +186,11 @@ const LocationForm: React.FC<LocationFormProps> = ({
         <button
           type="submit"
           disabled={isLoading || !address.trim() || address.trim().length < 5}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-blue-600 text-white py-2 px-4 hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-2 border-blue-600 font-space-grotesk font-black"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="animate-spin h-4 w-4 border-b-2 border-white"></div>
               Processing...
             </span>
           ) : (
@@ -194,7 +199,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
         </button>
       </form>
 
-      <div className="mt-4 text-xs text-gray-500">
+      <div className="mt-4 text-xs text-gray-300 font-space-grotesk">
         <p>
           <strong>Quick Examples:</strong>
         </p>
@@ -213,7 +218,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
                 setAddressError("");
               }}
               disabled={isLoading}
-              className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 border border-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-space-grotesk"
             >
               {example.split(",")[0]}
             </button>

@@ -18,6 +18,16 @@ body {
   font-family: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
 }
 
+/* Remove all rounded corners globally */
+* {
+  border-radius: 0 !important;
+}
+
+/* Ensure consistent Space Grotesk font weights */
+.font-space-grotesk {
+  font-family: "Space Grotesk", monospace;
+}
+
 /* Hide all Mapbox UI elements */
 .mapboxgl-ctrl-logo,
 .mapboxgl-ctrl-attrib,
