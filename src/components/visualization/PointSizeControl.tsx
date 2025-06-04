@@ -10,7 +10,7 @@ interface PointSizeControlProps {
 const PointSizeControl: React.FC<PointSizeControlProps> = ({
   pointSize,
   onPointSizeChange,
-  minSize = 1,
+  minSize = 0.5,
   maxSize = 50,
 }) => {
   return (

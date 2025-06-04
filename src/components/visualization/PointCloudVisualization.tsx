@@ -25,7 +25,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   const [jobDetails, setJobDetails] = useState<JobStatus | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [pointSize, setPointSize] = useState<number>(10);
+  const [pointSize, setPointSize] = useState<number>(1);
   const [viewState, setViewState] = useState<ViewState>({
     longitude: -105.2705,
     latitude: 40.015,
