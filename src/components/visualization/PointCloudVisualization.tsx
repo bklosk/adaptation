@@ -40,7 +40,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   const [viewState, setViewState] = useState<ViewState>({
     longitude: -105.2705,
     latitude: 40.015,
-    zoom: 15,
+    zoom: 15.5,
     pitch: 60,
     bearing: 0,
     ...initialViewState,
@@ -110,7 +110,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
           if (transformedData.length > 0) {
             // Calculate zoom level based on the extent of the data
             const zoomLevel =
-              PointCloudDataProcessor.calculateOptimalZoom(bounds);
+              PointCloudDataProcessor.calculateOptimalZoom(bounds) + 0.5;
 
             setViewState((prev) => ({
               ...prev,
@@ -226,7 +226,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     if (pointCloudData.length > 0 && initialBounds) {
       const { center, bounds } =
         PointCloudDataProcessor.transformCoordinates(pointCloudData);
-      const zoomLevel = PointCloudDataProcessor.calculateOptimalZoom(bounds);
+      const zoomLevel = PointCloudDataProcessor.calculateOptimalZoom(bounds) + 0.5;
 
       setViewState({
         longitude: center[0],
@@ -243,6 +243,25 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     setViewState((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  // Apply reduced sensitivity to DeckGL interactions
+  const handleDeckViewStateChange = useCallback(
+    (evt: { viewState: ViewState }) => {
+      const factor = 0.5; // Global sensitivity factor
+      setViewState((prev) => {
+        const vs = evt.viewState as ViewState;
+        return {
+          ...prev,
+          longitude: prev.longitude + (vs.longitude - prev.longitude) * factor,
+          latitude: prev.latitude + (vs.latitude - prev.latitude) * factor,
+          zoom: prev.zoom + (vs.zoom - prev.zoom) * factor,
+          pitch: prev.pitch + (vs.pitch - prev.pitch) * factor,
+          bearing: prev.bearing + (vs.bearing - prev.bearing) * factor,
+        };
+      });
+    },
+    []
+  );
+
   // Keyboard controls for camera movement
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -253,10 +272,10 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         event.preventDefault();
       }
 
-      const moveSpeed = 0.001; // Adjust for movement sensitivity
-      const zoomSpeed = 0.5;
-      const rotationSpeed = 5;
-      const pitchSpeed = 5;
+      const moveSpeed = 0.0005; // Reduced movement sensitivity
+      const zoomSpeed = 0.25; // Finer zoom steps
+      const rotationSpeed = 2; // Slower rotation
+      const pitchSpeed = 2; // Slower tilt
 
       setViewState((prev) => {
         const newViewState = { ...prev };
@@ -360,7 +379,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     >
       <DeckGL
         viewState={viewState}
-        onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
+        onViewStateChange={handleDeckViewStateChange}
         controller={{
           touchRotate: true,
           touchZoom: true,
