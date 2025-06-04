@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({
     >
       <div
         className="flex w-full items-center border border-white h-20"
-        style={{ backgroundColor: "#3D3D3E" }}
+        style={{ backgroundColor: "#1B2223" }}
       >
         {/* Logo Section */}
         <div className="flex-none px-8 py-4 border-r border-white min-w-[220px] flex justify-center">
