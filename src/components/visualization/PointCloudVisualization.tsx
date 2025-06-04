@@ -382,8 +382,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
           <KeyboardShortcuts />
         </div>
 
-        {/* Top right - Camera controls (hidden on mobile to avoid address overlap) */}
-        <div className="absolute top-4 right-4 pointer-events-auto hidden lg:block">
+        {/* Top right - Camera controls (positioned below centered address to avoid overlap) */}
+        <div className="absolute top-20 right-4 pointer-events-auto hidden lg:block">
           <CameraControls
             viewState={viewState}
             onViewStateChange={handleViewStateUpdate}
@@ -421,8 +421,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
           </div>
         )}
 
-        {/* Mobile camera controls - toggle button positioned below centered address */}
-        <div className="lg:hidden absolute top-20 right-4 pointer-events-auto">
+        {/* Mobile camera controls - toggle button positioned below both address and desktop controls */}
+        <div className="lg:hidden absolute top-32 right-4 pointer-events-auto">
           <button
             onClick={() => {
               const controls = document.getElementById(
@@ -455,7 +455,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         {/* Mobile camera controls panel positioned below toggle */}
         <div
           id="mobile-camera-controls"
-          className="lg:hidden hidden absolute top-32 right-4 pointer-events-auto"
+          className="lg:hidden hidden absolute top-44 right-4 pointer-events-auto"
         >
           <CameraControls
             viewState={viewState}

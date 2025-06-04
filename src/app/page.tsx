@@ -81,7 +81,7 @@ export default function Home() {
             </button>
 
             {/* Current location info with edit button - centered at top to avoid all UI conflicts */}
-            <div
+            {/* <div
               className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 backdrop-blur-sm text-white px-4 py-2 shadow-md max-w-xs sm:max-w-sm border-2 border-white"
               style={{ backgroundColor: "#1B2223" }}
             >
@@ -97,7 +97,7 @@ export default function Home() {
                   Edit Location
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Edit form overlay */}
             {showEditForm && (
