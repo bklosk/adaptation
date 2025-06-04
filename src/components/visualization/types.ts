@@ -12,9 +12,15 @@ export interface ViewState {
 }
 
 export interface JobStatus {
+  job_id: string;
   status: string;
-  output_file?: string;
-  error_message?: string;
+  address: string;
+  created_at: string;
+  completed_at?: string | null;
+  output_file?: string | null;
+  error_message?: string | null;
+  metadata?: Record<string, unknown>;
+  log_tail?: string[];
 }
 
 export interface ProcessingRequest {

@@ -55,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({
               height={64}
               className="h-16 w-auto"
             />
-            <span className="text-white font-black text-2xl font-space-grotesk">
+            <span className="text-white font-black text-3xl font-space-grotesk">
               tdc
             </span>
           </div>

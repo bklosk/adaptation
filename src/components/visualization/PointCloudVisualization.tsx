@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import DeckGL from "@deck.gl/react";
 import { PointCloudLayer } from "@deck.gl/layers";
-import { PointData, ViewState } from "./types";
+import { PointData, ViewState, JobStatus } from "./types";
 import { PointCloudAPIService } from "./apiService";
 import { PointCloudDataProcessor } from "./dataProcessor";
 import StatusDisplay from "./StatusDisplay";
@@ -22,6 +22,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
 }) => {
   const [pointCloudData, setPointCloudData] = useState<PointData[]>([]);
   const [status, setStatus] = useState<string>("Loading...");
+  const [jobDetails, setJobDetails] = useState<JobStatus | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [pointSize, setPointSize] = useState<number>(10);
@@ -49,6 +50,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
       try {
         const job = await PointCloudAPIService.getJobStatus(id);
         setStatus(job.status);
+        setJobDetails(job); // Store complete job details
 
         if (job.status === "completed" && job.output_file) {
           setIsDownloading(true);
@@ -81,8 +83,9 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         } else if (job.status === "failed") {
           setStatus("Failed: " + job.error_message);
         } else if (job.status !== "completed") {
-          // Continue polling with exponential backoff for retries
-          setTimeout(() => poll(), 2000);
+          // Continue polling - use shorter interval if actively processing
+          const interval = job.status === "processing" ? 1500 : 2000;
+          setTimeout(() => poll(), interval);
         }
       } catch (error) {
         console.error("Polling error:", error);
@@ -175,6 +178,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         pointCount={pointCloudData.length}
         downloadProgress={downloadProgress}
         isDownloading={isDownloading}
+        jobDetails={jobDetails || undefined}
       />
 
       {!isDownloading && (
