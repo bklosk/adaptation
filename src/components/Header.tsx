@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <motion.header
-      className="fixed top-0 left-0 w-full z-50 shadow-lg"
+      className="fixed top-0 left-0 w-full z-50"
       initial={{ y: 0 }}
       animate={{ y: isVisible ? 0 : -100 }}
       transition={{
@@ -44,12 +44,9 @@ const Header: React.FC<HeaderProps> = ({
         ease: "easeInOut",
       }}
     >
-      <div
-        className="flex w-full items-center border border-white h-20"
-        style={{ backgroundColor: "#1B2223" }}
-      >
-        {/* Logo Section */}
-        <div className="flex-none px-8 py-4 border-r border-white min-w-[220px] flex justify-center">
+      <div className="flex w-full h-20" style={{ backgroundColor: "#1B2223" }}>
+        {/* Logo Rectangle */}
+        <div className="flex-1 px-8 flex justify-center items-center border-b border-r border-white lg:border-b-2 lg:border-r-2">
           <div className="flex items-center space-x-4">
             <Image
               src="/logo.png"
@@ -64,29 +61,59 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navigation Section - Combined center rectangles */}
-        <div className="flex-1 flex">
-          {items.slice(0, 2).map((item, index) => (
-            <a
-              key={index}
-              href="#"
-              className="flex-1 px-4 py-4 text-white font-medium text-sm sm:text-base
-                       hover:bg-gray-600
-                       focus:outline-none focus:ring-2 focus:ring-white
-                       transition-all duration-200 cursor-pointer
-                       text-center font-space-grotesk"
-            >
-              {item}
-            </a>
-          ))}
+        {/* Navigation Rectangle - Hidden on medium and smaller screens */}
+        <div className="hidden md:flex flex-1 px-4 justify-center items-center border-b border-white lg:border-b-2 border-r lg:border-r-2">
+          <nav className="flex space-x-8">
+            {items.slice(0, 2).map((item, index) => (
+              <a
+                key={index}
+                href="#"
+                className="text-white font-medium text-sm sm:text-base
+                         hover:text-gray-300
+                         focus:outline-none focus:text-gray-300
+                         transition-colors duration-200 cursor-pointer
+                         font-space-grotesk"
+              >
+                {item}
+              </a>
+            ))}
+          </nav>
         </div>
 
-        {/* Hamburger Menu Section */}
-        <div className="flex-none px-4 py-4 border-l border-white">
+        {/* Menu Rectangle - Hidden on medium and smaller screens */}
+        <div className="hidden md:flex flex-1 px-4 justify-center items-center border-b border-white lg:border-b-2">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white
-                     transition-all duration-200 p-1 rounded"
+            className="text-white hover:text-gray-300 focus:outline-none focus:text-gray-300
+                     transition-colors duration-200"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={
+                  isMenuOpen
+                    ? "M6 18L18 6M6 6l12 12"
+                    : "M4 6h16M4 12h16M4 18h16"
+                }
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Menu Button - Visible only on small screens */}
+        <div className="md:hidden flex justify-center items-center px-4 border-b border-white lg:border-b-2">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="text-white hover:text-gray-300 focus:outline-none focus:text-gray-300
+                     transition-colors duration-200"
             aria-label="Toggle menu"
           >
             <svg
@@ -110,13 +137,13 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile/Dropdown Menu */}
+      {/* Dropdown Menu */}
       {isMenuOpen && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="absolute top-full left-0 w-full shadow-lg z-60"
+          className="absolute top-full left-0 w-full z-60"
           style={{ backgroundColor: "#3D3D3E" }}
         >
           {items.slice(2).map((item, index) => (
@@ -124,10 +151,10 @@ const Header: React.FC<HeaderProps> = ({
               key={index}
               href="#"
               className="block px-4 py-3 text-white font-medium text-sm sm:text-base
-                       border-b border-white last:border-b-0
-                       hover:bg-gray-600
-                       focus:outline-none focus:ring-2 focus:ring-white
-                       transition-all duration-200 cursor-pointer
+                       border-b border-white lg:border-b-2 last:border-b-0
+                       hover:text-gray-300
+                       focus:outline-none focus:text-gray-300
+                       transition-colors duration-200 cursor-pointer
                        font-space-grotesk"
               onClick={() => setIsMenuOpen(false)}
             >
