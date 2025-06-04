@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -12,25 +12,35 @@ interface SatelliteVisualizationProps {
 const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   address,
 }) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
 
   // Geocode address to get coordinates
   const geocodeAddress = async (
     addressQuery: string
   ): Promise<[number, number]> => {
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-        addressQuery
-      )}.json?access_token=${
-        process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-      }&limit=1`
-    );
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+    if (!token) {
+      throw new Error(
+        "Mapbox access token not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your .env.local file."
+      );
+    }
+
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+      addressQuery
+    )}.json?access_token=${token}&limit=1`;
+
+    const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error("Failed to geocode address");
+      const errorText = await response.text();
+      console.error("Geocoding API error:", response.status, errorText);
+      throw new Error(
+        `Failed to geocode address: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -44,6 +54,18 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
 
   const initializeMap = useCallback(async () => {
     if (!address || !mapContainer.current) return;
+
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+    if (!token) {
+      setError(
+        "Mapbox access token not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your .env.local file."
+      );
+      return;
+    }
+
+    // Set the Mapbox access token
+    mapboxgl.accessToken = token;
 
     setIsLoading(true);
     setError(null);
