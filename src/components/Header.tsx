@@ -45,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({
       }}
     >
       <div
-        className="flex w-full items-center border border-white"
+        className="flex w-full items-center border border-white h-20"
         style={{ backgroundColor: "#3D3D3E" }}
       >
         {/* Logo Section */}
@@ -116,7 +116,7 @@ const Header: React.FC<HeaderProps> = ({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="absolute top-full left-0 w-full shadow-lg"
+          className="absolute top-full left-0 w-full shadow-lg z-60"
           style={{ backgroundColor: "#3D3D3E" }}
         >
           {items.slice(2).map((item, index) => (

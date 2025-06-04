@@ -15,12 +15,12 @@ const StatusDisplay: React.FC<StatusDisplayProps> = ({
 }) => {
   return (
     <>
-      <div className="absolute top-3 left-3 bg-white p-3 font-space-grotesk text-sm font-medium rounded shadow">
+      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 font-space-grotesk text-sm font-medium rounded-lg shadow-lg z-10">
         Status: {status} | Points: {pointCount.toLocaleString()}
       </div>
 
       {isDownloading && (
-        <div className="absolute top-16 left-3 bg-white p-3 w-72 font-space-grotesk rounded shadow">
+        <div className="absolute bottom-20 left-4 bg-white/90 backdrop-blur-sm p-3 w-72 font-space-grotesk rounded-lg shadow-lg z-10">
           <div className="text-sm">
             Download in progress... {downloadProgress}% (
             {pointCount.toLocaleString()} points loaded)

@@ -155,7 +155,14 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   ];
 
   return (
-    <div style={{ position: "relative", height: "100%", width: "100%" }}>
+    <div
+      style={{
+        position: "relative",
+        height: "100%",
+        width: "100%",
+        overflow: "hidden",
+      }}
+    >
       <DeckGL
         viewState={viewState}
         onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
