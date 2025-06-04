@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import { PointCloudVisualization } from "../components/visualization";
+import OrthophotoVisualization from "../components/visualization/OrthophotoVisualization";
 import LocationForm from "../components/LocationForm";
 
 export default function Home() {
@@ -111,17 +112,31 @@ export default function Home() {
               </div>
             )}
 
-            <PointCloudVisualization
-              address={currentAddress}
-              bufferKm={currentBufferKm}
-              initialViewState={{
-                longitude: -105.2705,
-                latitude: 40.015,
-                zoom: 15,
-                pitch: 60,
-                bearing: 0,
-              }}
-            />
+            {/* Split layout for point cloud and orthophoto */}
+            <div className="flex h-full">
+              {/* Point Cloud Visualization - Left Side */}
+              <div className="w-2/3 h-full">
+                <PointCloudVisualization
+                  address={currentAddress}
+                  bufferKm={currentBufferKm}
+                  initialViewState={{
+                    longitude: -105.2705,
+                    latitude: 40.015,
+                    zoom: 15,
+                    pitch: 60,
+                    bearing: 0,
+                  }}
+                />
+              </div>
+              
+              {/* Orthophoto Visualization - Right Side */}
+              <div className="w-1/3 h-full border-l border-gray-200">
+                <OrthophotoVisualization
+                  address={currentAddress}
+                  imageSize="600,600"
+                />
+              </div>
+            </div>
           </div>
         )}
       </main>

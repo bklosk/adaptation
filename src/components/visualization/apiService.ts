@@ -1,4 +1,4 @@
-import { JobStatus, ProcessingRequest } from "./types";
+import { JobStatus, ProcessingRequest, OrthophotoRequest } from "./types";
 
 export class PointCloudAPIService {
   private static readonly BASE_URL = "http://localhost:8000";
@@ -68,5 +68,23 @@ export class PointCloudAPIService {
     }
 
     return new Blob(chunks);
+  }
+
+  static async fetchOrthophoto(
+    request: OrthophotoRequest
+  ): Promise<Blob> {
+    const response = await fetch(`${this.BASE_URL}/orthophoto`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch orthophoto: ${response.status}`);
+    }
+
+    return await response.blob();
   }
 }

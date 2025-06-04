@@ -27,3 +27,20 @@ export interface ProcessingRequest {
   address: string;
   buffer_km: number;
 }
+
+export interface OrthophotoRequest {
+  address: string;
+  image_size?: string;
+}
+
+export interface OrthophotoData {
+  imageUrl: string;
+  width: number;
+  height: number;
+  bounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+}
