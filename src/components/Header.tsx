@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({
     >
       <div className="flex w-full h-20" style={{ backgroundColor: "#1B2223" }}>
         {/* Logo Rectangle */}
-        <div className="flex-1 px-8 flex justify-center items-center border-b border-r border-white lg:border-b-2 lg:border-r-2">
+        <div className="md:w-48 flex-1 md:flex-none px-4 pl-8 flex justify-start items-center border-b border-r border-white lg:border-b-2 lg:border-r-2">
           <div className="flex items-center space-x-4">
             <Image
               src="/logo.png"
@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({
               className="h-16 w-auto"
             />
             <span className="text-white font-black text-3xl font-space-grotesk">
-              tdc
+              risc
             </span>
           </div>
         </div>
@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Menu Rectangle - Hidden on medium and smaller screens */}
-        <div className="hidden md:flex flex-1 px-4 justify-center items-center border-b border-white lg:border-b-2">
+        <div className="hidden md:flex w-16 px-2 justify-center items-center border-b border-white lg:border-b-2">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="text-white hover:text-gray-300 focus:outline-none focus:text-gray-300
@@ -109,7 +109,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Mobile Menu Button - Visible only on small screens */}
-        <div className="md:hidden flex justify-center items-center px-4 border-b border-white lg:border-b-2">
+        <div className="md:hidden flex w-16 justify-center items-center px-2 border-b border-white lg:border-b-2">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="text-white hover:text-gray-300 focus:outline-none focus:text-gray-300

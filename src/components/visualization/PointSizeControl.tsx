@@ -14,7 +14,7 @@ const PointSizeControl: React.FC<PointSizeControlProps> = ({
   maxSize = 50,
 }) => {
   return (
-    <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg font-space-grotesk z-10">
+    <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg font-space-grotesk z-10">
       <label htmlFor="pointSize" className="block mb-1 text-sm font-bold">
         Point Size: {pointSize}
       </label>

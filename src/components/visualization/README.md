@@ -9,6 +9,8 @@ This directory contains the organized point cloud visualization components for t
 - **`PointCloudVisualization.tsx`** - Main visualization component that orchestrates the entire point cloud display
 - **`StatusDisplay.tsx`** - Component for showing job status and point count
 - **`PointSizeControl.tsx`** - Component for controlling point size with a slider
+- **`CameraControls.tsx`** - Component for camera manipulation with zoom, pitch, bearing controls and preset views
+- **`KeyboardShortcuts.tsx`** - Component showing keyboard shortcuts help and handling keyboard navigation
 
 ### Utility Classes
 
@@ -46,6 +48,50 @@ import { PointCloudVisualization } from "../components/visualization";
 - **Coordinate Transformation**: Automatic UTM to WGS84 coordinate conversion
 - **Progress Tracking**: Real-time download progress indication
 - **Responsive UI**: Tailwind CSS styling for modern appearance
+- **Automatic Zoom Calculation**: Intelligently calculates optimal zoom level based on point cloud extent
+- **Advanced Camera Controls**: Interactive controls for zoom, pitch, bearing with preset views
+- **Enhanced 3D Navigation**: Smooth panning, rotation, and zooming with inertia
+- **Keyboard Navigation**: Full keyboard support for camera movement and control
+- **Better Point Cloud Rendering**: Improved depth testing and material properties for realistic 3D visualization
+
+## Camera Controls
+
+The new `CameraControls` component provides:
+
+- **Zoom Control**: Precise zoom adjustment from 8x to 22x
+- **Pitch Control**: Tilt angle from 0° (top-down) to 85° (side view)
+- **Bearing Control**: 360° rotation control
+- **Preset Views**: Quick buttons for common viewing angles
+  - Top View (0° pitch, 0° bearing)
+  - Angle View (45° pitch, 0° bearing)
+  - Side View (85° pitch, 0° bearing)
+  - Corner View (45° pitch, 45° bearing)
+- **Reset View**: Automatically centers and optimally zooms to the point cloud
+
+## Keyboard Controls
+
+The visualization now supports comprehensive keyboard navigation:
+
+### Navigation
+
+- **Arrow Keys**: Pan camera view (up/down/left/right)
+- **W A S D**: Alternative pan controls (forward/left/backward/right)
+
+### Zoom
+
+- **+ or =**: Zoom in
+- **- or \_**: Zoom out
+
+### Rotation & Pitch
+
+- **Q / E**: Rotate camera left/right (bearing)
+- **R / F**: Tilt camera up/down (pitch)
+
+### Utility
+
+- **Spacebar**: Reset to optimal view (centers and zooms to point cloud)
+
+_Note: The keyboard shortcuts help panel (?) in the top-left provides a quick reference._
 
 ## API Integration
 

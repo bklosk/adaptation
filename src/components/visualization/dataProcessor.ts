@@ -145,13 +145,33 @@ export class PointCloudDataProcessor {
   static transformCoordinates(pointData: PointData[]): {
     data: PointData[];
     center: [number, number];
+    bounds: {
+      minLon: number;
+      maxLon: number;
+      minLat: number;
+      maxLat: number;
+      minZ: number;
+      maxZ: number;
+    };
   } {
     if (pointData.length === 0) {
-      return { data: pointData, center: [-105.2705, 40.015] };
+      return {
+        data: pointData,
+        center: [-105.2705, 40.015],
+        bounds: {
+          minLon: -105.2705,
+          maxLon: -105.2705,
+          minLat: 40.015,
+          maxLat: 40.015,
+          minZ: 0,
+          maxZ: 0,
+        },
+      };
     }
 
     const xCoords = pointData.map((p) => p.position[0]);
     const yCoords = pointData.map((p) => p.position[1]);
+    const zCoords = pointData.map((p) => p.position[2]);
     const centerX = (Math.min(...xCoords) + Math.max(...xCoords)) / 2;
     const centerY = (Math.min(...yCoords) + Math.max(...yCoords)) / 2;
 
@@ -171,16 +191,66 @@ export class PointCloudDataProcessor {
         };
       });
 
-      // Calculate center of transformed data
+      // Calculate bounds and center of transformed data
       const lons = transformedPointData.map((p) => p.position[0]);
       const lats = transformedPointData.map((p) => p.position[1]);
-      const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
-      const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+      const zs = transformedPointData.map((p) => p.position[2]);
 
-      return { data: transformedPointData, center: [centerLon, centerLat] };
+      const bounds = {
+        minLon: Math.min(...lons),
+        maxLon: Math.max(...lons),
+        minLat: Math.min(...lats),
+        maxLat: Math.max(...lats),
+        minZ: Math.min(...zs),
+        maxZ: Math.max(...zs),
+      };
+
+      const centerLon = (bounds.minLon + bounds.maxLon) / 2;
+      const centerLat = (bounds.minLat + bounds.maxLat) / 2;
+
+      return {
+        data: transformedPointData,
+        center: [centerLon, centerLat],
+        bounds,
+      };
     }
 
-    return { data: pointData, center: [centerX, centerY] };
+    // For already transformed coordinates
+    const bounds = {
+      minLon: Math.min(...xCoords),
+      maxLon: Math.max(...xCoords),
+      minLat: Math.min(...yCoords),
+      maxLat: Math.max(...yCoords),
+      minZ: Math.min(...zCoords),
+      maxZ: Math.max(...zCoords),
+    };
+
+    return { data: pointData, center: [centerX, centerY], bounds };
+  }
+
+  static calculateOptimalZoom(bounds: {
+    minLon: number;
+    maxLon: number;
+    minLat: number;
+    maxLat: number;
+    minZ: number;
+    maxZ: number;
+  }): number {
+    // Calculate the extent of the data in degrees
+    const latExtent = bounds.maxLat - bounds.minLat;
+    const lonExtent = bounds.maxLon - bounds.minLon;
+
+    // Use the larger extent to determine zoom level
+    const maxExtent = Math.max(latExtent, lonExtent);
+
+    // Zoom level mapping based on extent
+    // These values are empirically determined for good visibility
+    if (maxExtent > 0.1) return 10; // Very large area
+    if (maxExtent > 0.05) return 12; // Large area
+    if (maxExtent > 0.01) return 14; // Medium area
+    if (maxExtent > 0.005) return 16; // Small area
+    if (maxExtent > 0.001) return 18; // Very small area
+    return 20; // Extremely small area
   }
 
   static getTestData(): PointData[] {

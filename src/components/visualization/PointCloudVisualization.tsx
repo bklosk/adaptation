@@ -8,6 +8,8 @@ import { PointCloudAPIService } from "./apiService";
 import { PointCloudDataProcessor } from "./dataProcessor";
 import StatusDisplay, { JobStatus, JobDetails } from "./StatusDisplay";
 import PointSizeControl from "./PointSizeControl";
+import CameraControls from "./CameraControls";
+import KeyboardShortcuts from "./KeyboardShortcuts";
 
 interface PointCloudVisualizationProps {
   address?: string;
@@ -27,6 +29,14 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [pointSize, setPointSize] = useState<number>(1);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [initialBounds, setInitialBounds] = useState<{
+    minLon: number;
+    maxLon: number;
+    minLat: number;
+    maxLat: number;
+    minZ: number;
+    maxZ: number;
+  } | null>(null);
   const [viewState, setViewState] = useState<ViewState>({
     longitude: -105.2705,
     latitude: 40.015,
@@ -87,18 +97,28 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
           );
 
           const pointData = await PointCloudDataProcessor.processLASFile(blob);
-          const { data: transformedData, center } =
-            PointCloudDataProcessor.transformCoordinates(pointData);
+          const {
+            data: transformedData,
+            center,
+            bounds,
+          } = PointCloudDataProcessor.transformCoordinates(pointData);
 
           setPointCloudData(transformedData);
+          setInitialBounds(bounds);
 
-          // Update view to center on the data
+          // Update view to center on the data with appropriate zoom
           if (transformedData.length > 0) {
+            // Calculate zoom level based on the extent of the data
+            const zoomLevel =
+              PointCloudDataProcessor.calculateOptimalZoom(bounds);
+
             setViewState((prev) => ({
               ...prev,
               longitude: center[0],
               latitude: center[1],
-              zoom: 18,
+              zoom: zoomLevel,
+              pitch: 45, // Better angle for viewing 3D point clouds
+              bearing: 0,
             }));
           }
 
@@ -182,11 +202,150 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
       getPosition: (d: PointData) => d.position as [number, number, number],
       getColor: (d: PointData) => d.color as [number, number, number],
       pointSize: pointSize,
-      radiusMinPixels: 5,
-      radiusMaxPixels: 100,
+      radiusMinPixels: 1,
+      radiusMaxPixels: 50,
       visible: true,
+      pickable: true,
+      coordinateSystem: 1, // COORDINATE_SYSTEM.LNGLAT
+      modelMatrix: null,
+      material: {
+        ambient: 0.35,
+        diffuse: 0.6,
+        shininess: 32,
+        specularColor: [255, 255, 255],
+      },
+      parameters: {
+        depthTest: true,
+        depthWrite: true,
+      },
     }),
   ];
+
+  // Reset view to the initial state centered on the point cloud
+  const resetView = useCallback(() => {
+    if (pointCloudData.length > 0 && initialBounds) {
+      const { center, bounds } =
+        PointCloudDataProcessor.transformCoordinates(pointCloudData);
+      const zoomLevel = PointCloudDataProcessor.calculateOptimalZoom(bounds);
+
+      setViewState({
+        longitude: center[0],
+        latitude: center[1],
+        zoom: zoomLevel,
+        pitch: 45,
+        bearing: 0,
+      });
+    }
+  }, [pointCloudData, initialBounds]);
+
+  // Handle partial view state updates
+  const handleViewStateUpdate = useCallback((updates: Partial<ViewState>) => {
+    setViewState((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  // Keyboard controls for camera movement
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent default behavior for arrow keys to avoid page scrolling
+      if (
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)
+      ) {
+        event.preventDefault();
+      }
+
+      const moveSpeed = 0.001; // Adjust for movement sensitivity
+      const zoomSpeed = 0.5;
+      const rotationSpeed = 5;
+      const pitchSpeed = 5;
+
+      setViewState((prev) => {
+        const newViewState = { ...prev };
+
+        switch (event.key) {
+          // Arrow keys for panning
+          case "ArrowUp":
+            newViewState.latitude += moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+          case "ArrowDown":
+            newViewState.latitude -= moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+          case "ArrowLeft":
+            newViewState.longitude -= moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+          case "ArrowRight":
+            newViewState.longitude += moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+
+          // WASD for alternative panning
+          case "w":
+          case "W":
+            newViewState.latitude += moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+          case "s":
+          case "S":
+            newViewState.latitude -= moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+          case "a":
+          case "A":
+            newViewState.longitude -= moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+          case "d":
+          case "D":
+            newViewState.longitude += moveSpeed * Math.pow(2, 20 - prev.zoom);
+            break;
+
+          // Zoom controls
+          case "+":
+          case "=":
+            newViewState.zoom = Math.min(22, prev.zoom + zoomSpeed);
+            break;
+          case "-":
+          case "_":
+            newViewState.zoom = Math.max(8, prev.zoom - zoomSpeed);
+            break;
+
+          // Rotation controls (Q/E)
+          case "q":
+          case "Q":
+            newViewState.bearing = (prev.bearing - rotationSpeed + 360) % 360;
+            break;
+          case "e":
+          case "E":
+            newViewState.bearing = (prev.bearing + rotationSpeed) % 360;
+            break;
+
+          // Pitch controls (R/F)
+          case "r":
+          case "R":
+            newViewState.pitch = Math.min(85, prev.pitch + pitchSpeed);
+            break;
+          case "f":
+          case "F":
+            newViewState.pitch = Math.max(0, prev.pitch - pitchSpeed);
+            break;
+
+          // Reset view (Space)
+          case " ":
+            event.preventDefault();
+            resetView();
+            return prev; // Don't update state here as resetView handles it
+
+          default:
+            return prev; // No change for other keys
+        }
+
+        return newViewState;
+      });
+    };
+
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [resetView]);
 
   return (
     <div
@@ -196,13 +355,27 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         width: "100%",
         overflow: "hidden",
       }}
+      tabIndex={0}
+      className="focus:outline-none"
     >
       <DeckGL
         viewState={viewState}
         onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
-        controller={true}
+        controller={{
+          touchRotate: true,
+          touchZoom: true,
+          doubleClickZoom: true,
+          keyboard: true,
+          dragPan: true,
+          dragRotate: true,
+          scrollZoom: true,
+          inertia: 200, // Smooth deceleration
+        }}
         layers={layers}
+        getCursor={() => "grab"}
       />
+
+      <KeyboardShortcuts />
 
       <StatusDisplay
         status={status}
@@ -222,10 +395,17 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
       />
 
       {!isDownloading && (
-        <PointSizeControl
-          pointSize={pointSize}
-          onPointSizeChange={setPointSize}
-        />
+        <>
+          <PointSizeControl
+            pointSize={pointSize}
+            onPointSizeChange={setPointSize}
+          />
+          <CameraControls
+            viewState={viewState}
+            onViewStateChange={handleViewStateUpdate}
+            onResetView={resetView}
+          />
+        </>
       )}
     </div>
   );
