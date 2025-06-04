@@ -7,6 +7,8 @@ This directory contains the organized point cloud visualization components for t
 ### Core Components
 
 - **`PointCloudVisualization.tsx`** - Main visualization component that orchestrates the entire point cloud display
+- **`SatelliteVisualization.tsx`** - Component for displaying satellite imagery using Mapbox
+- **`FloodVisualization.tsx`** - Component for displaying 100-year flood depth visualization from the API
 - **`StatusDisplay.tsx`** - Component for showing job status and point count
 - **`PointSizeControl.tsx`** - Component for controlling point size with a slider
 - **`CameraControls.tsx`** - Component for camera manipulation with zoom, pitch, bearing controls and preset views

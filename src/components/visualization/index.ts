@@ -1,5 +1,6 @@
 export { default as PointCloudVisualization } from "./PointCloudVisualization";
 export { default as SatelliteVisualization } from "./SatelliteVisualization";
+export { default as FloodVisualization } from "./FloodVisualization";
 export { default as StatusDisplay } from "./StatusDisplay";
 export { default as PointSizeControl } from "./PointSizeControl";
 export { default as CameraControls } from "./CameraControls";

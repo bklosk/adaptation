@@ -2,7 +2,10 @@
 
 import React, { useState } from "react";
 import Header from "../components/Header";
-import { PointCloudVisualization } from "../components/visualization";
+import {
+  PointCloudVisualization,
+  FloodVisualization,
+} from "../components/visualization";
 import SatelliteVisualization from "../components/visualization/SatelliteVisualization";
 import LocationForm from "../components/LocationForm";
 
@@ -150,42 +153,9 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Flood Risk Placeholder - Bottom Right (2/5 height) */}
-                <div
-                  className="h-2/5 flex items-center justify-center border-2 border-white border-t-0"
-                  style={{ backgroundColor: "#1B2223" }}
-                >
-                  <div className="text-center p-6">
-                    <div className="mb-4">
-                      <svg
-                        className="h-12 w-12 mx-auto text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        strokeWidth="2"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.5 3.5 0 001.481-6.687 3.5 3.5 0 00-1.481-6.687H6.75a4.5 4.5 0 00-4.5 4.5v3z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 9v6m3-3H9"
-                        />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-black text-white mb-2 font-space-grotesk">
-                      Flood Risk Analysis
-                    </h3>
-                    <p className="text-sm text-gray-300 font-space-grotesk">
-                      Comprehensive flood risk assessment for this location
-                    </p>
-                    <div className="mt-4 text-xs text-gray-400 font-space-grotesk">
-                      Coming Soon
-                    </div>
-                  </div>
+                {/* Flood Risk Visualization - Bottom Right (2/5 height) */}
+                <div className="h-2/5">
+                  <FloodVisualization address={currentAddress} bboxM={64.0} />
                 </div>
               </div>
             </div>

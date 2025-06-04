@@ -85,4 +85,23 @@ export class PointCloudAPIService {
 
     return await response.blob();
   }
+
+  static async fetchFloodOverhead(
+    address: string,
+    bboxM: number = 64.0
+  ): Promise<Blob> {
+    const response = await fetch(
+      `${this.BASE_URL}/flood-overhead?address=${encodeURIComponent(
+        address
+      )}&bbox_m=${bboxM}`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch flood data: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return await response.blob();
+  }
 }
