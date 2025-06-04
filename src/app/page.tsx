@@ -31,9 +31,6 @@ export default function Home() {
     setShowEditForm(false);
   };
 
-  const handleEditLocation = () => {
-    setShowEditForm(true);
-  };
 
   const handleEditSubmit = (address: string, bufferKm: number) => {
     setCurrentAddress(address);
