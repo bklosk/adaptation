@@ -70,9 +70,7 @@ export class PointCloudAPIService {
     return new Blob(chunks);
   }
 
-  static async fetchOrthophoto(
-    request: OrthophotoRequest
-  ): Promise<Blob> {
+  static async fetchOrthophoto(request: OrthophotoRequest): Promise<Blob> {
     const response = await fetch(`${this.BASE_URL}/orthophoto`, {
       method: "POST",
       headers: {

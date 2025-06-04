@@ -128,7 +128,7 @@ export default function Home() {
                   }}
                 />
               </div>
-              
+
               {/* Orthophoto Visualization - Right Side */}
               <div className="w-1/3 h-full border-l border-gray-200">
                 <OrthophotoVisualization
