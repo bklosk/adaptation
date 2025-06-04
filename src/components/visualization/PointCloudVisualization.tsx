@@ -3,10 +3,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import DeckGL from "@deck.gl/react";
 import { PointCloudLayer } from "@deck.gl/layers";
-import { PointData, ViewState, JobStatus } from "./types";
+import { PointData, ViewState } from "./types";
 import { PointCloudAPIService } from "./apiService";
 import { PointCloudDataProcessor } from "./dataProcessor";
-import StatusDisplay from "./StatusDisplay";
+import StatusDisplay, { JobStatus, JobDetails } from "./StatusDisplay";
 import PointSizeControl from "./PointSizeControl";
 
 interface PointCloudVisualizationProps {
@@ -21,11 +21,12 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   initialViewState = {},
 }) => {
   const [pointCloudData, setPointCloudData] = useState<PointData[]>([]);
-  const [status, setStatus] = useState<string>("Loading...");
-  const [jobDetails, setJobDetails] = useState<JobStatus | null>(null);
+  const [status, setStatus] = useState<JobStatus>("pending");
+  const [jobDetails, setJobDetails] = useState<JobDetails | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [pointSize, setPointSize] = useState<number>(1);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewState, setViewState] = useState<ViewState>({
     longitude: -105.2705,
     latitude: 40.015,
@@ -41,7 +42,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
 
     const poll = async (): Promise<void> => {
       if (pollCount >= maxPolls) {
-        setStatus("Polling timeout - job may still be processing");
+        setStatus("failed");
+        setErrorMessage("Polling timeout - job may still be processing");
         return;
       }
 
@@ -49,8 +51,30 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
 
       try {
         const job = await PointCloudAPIService.getJobStatus(id);
-        setStatus(job.status);
-        setJobDetails(job); // Store complete job details
+
+        // Map the API status to our JobStatus type
+        const mappedStatus: JobStatus =
+          job.status === "completed" ||
+          job.status === "failed" ||
+          job.status === "processing" ||
+          job.status === "pending" ||
+          job.status === "queued"
+            ? (job.status as JobStatus)
+            : "processing";
+
+        setStatus(mappedStatus);
+        setErrorMessage(null);
+
+        // Create JobDetails from the API response
+        const details: JobDetails = {
+          job_id: job.job_id,
+          address: job.address,
+          created_at: job.created_at,
+          completed_at: job.completed_at,
+          error_message: job.error_message,
+          metadata: job.metadata,
+        };
+        setJobDetails(details);
 
         if (job.status === "completed" && job.output_file) {
           setIsDownloading(true);
@@ -81,7 +105,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
           setIsDownloading(false);
           setDownloadProgress(0);
         } else if (job.status === "failed") {
-          setStatus("Failed: " + job.error_message);
+          setStatus("failed");
+          setErrorMessage(job.error_message || "Job failed");
         } else if (job.status !== "completed") {
           // Continue polling - use shorter interval if actively processing
           const interval = job.status === "processing" ? 1500 : 2000;
@@ -96,7 +121,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
           setTimeout(() => poll(), 3000);
         } else {
           // After several failures, show error but don't crash
-          setStatus(
+          setStatus("failed");
+          setErrorMessage(
             `Connection error: ${
               error instanceof Error ? error.message : "Unknown error"
             }. Retrying...`
@@ -112,7 +138,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
 
   const startNewJob = useCallback(async () => {
     try {
-      setStatus("Starting new job...");
+      setStatus("pending");
+      setErrorMessage(null);
 
       const result = await PointCloudAPIService.startProcessingJob({
         address,
@@ -122,10 +149,14 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
       if (result.success && result.job_id) {
         pollJobStatus(result.job_id);
       } else {
-        setStatus(`Failed to start job: ${result.message || "Unknown error"}`);
+        setStatus("failed");
+        setErrorMessage(
+          `Failed to start job: ${result.message || "Unknown error"}`
+        );
       }
     } catch (error) {
-      setStatus(
+      setStatus("failed");
+      setErrorMessage(
         `Error starting job: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
@@ -178,7 +209,16 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         pointCount={pointCloudData.length}
         downloadProgress={downloadProgress}
         isDownloading={isDownloading}
-        jobDetails={jobDetails || undefined}
+        jobDetails={
+          jobDetails
+            ? {
+                ...jobDetails,
+                error_message: errorMessage || jobDetails.error_message,
+              }
+            : errorMessage
+            ? { error_message: errorMessage }
+            : undefined
+        }
       />
 
       {!isDownloading && (
