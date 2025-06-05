@@ -31,6 +31,7 @@ export default function Home() {
     setShowEditForm(false);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleEditLocation = () => {
     setShowEditForm(true);
   };

@@ -7,12 +7,14 @@ interface CameraControlsProps {
   viewState: ViewState;
   onViewStateChange: (viewState: Partial<ViewState>) => void;
   onResetView: () => void;
+  onMinimize?: () => void;
 }
 
 const CameraControls: React.FC<CameraControlsProps> = ({
   viewState,
   onViewStateChange,
   onResetView,
+  onMinimize,
 }) => {
   const handleSliderChange = (property: keyof ViewState, value: number) => {
     onViewStateChange({ [property]: value });
@@ -28,12 +30,23 @@ const CameraControls: React.FC<CameraControlsProps> = ({
           <h3 className="text-sm font-black text-white font-space-grotesk">
             Camera Controls
           </h3>
-          <button
-            onClick={onResetView}
-            className="px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors border border-blue-600 font-space-grotesk font-black"
-          >
-            Reset View
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onResetView}
+              className="px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors border border-blue-600 font-space-grotesk font-black"
+            >
+              Reset View
+            </button>
+            {onMinimize && (
+              <button
+                onClick={onMinimize}
+                className="text-gray-300 hover:text-white text-lg leading-none font-black"
+                title="Hide Controls"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Zoom Control */}

@@ -28,6 +28,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [pointSize, setPointSize] = useState<number>(1);
+  const [showCameraControls, setShowCameraControls] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [initialBounds, setInitialBounds] = useState<{
     minLon: number;
@@ -384,11 +385,35 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
 
         {/* Top right - Camera controls (positioned below centered address to avoid overlap) */}
         <div className="absolute top-20 right-4 pointer-events-auto hidden lg:block">
-          <CameraControls
-            viewState={viewState}
-            onViewStateChange={handleViewStateUpdate}
-            onResetView={resetView}
-          />
+          {showCameraControls ? (
+            <CameraControls
+              viewState={viewState}
+              onViewStateChange={handleViewStateUpdate}
+              onResetView={resetView}
+              onMinimize={() => setShowCameraControls(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setShowCameraControls(true)}
+              className="backdrop-blur-sm p-2 shadow-lg hover:bg-gray-700 transition-all border-2 border-white font-space-grotesk"
+              style={{ backgroundColor: "#1B2223" }}
+              title="Camera Controls"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Bottom left - Status display */}
