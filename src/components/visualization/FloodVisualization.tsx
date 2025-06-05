@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { PointCloudAPIService } from "./apiService";
 
 interface FloodVisualizationProps {
@@ -134,15 +135,17 @@ const FloodVisualization: React.FC<FloodVisualizationProps> = ({
         {/* Image Display */}
         {imageData && !isLoading && !error && (
           <div className="h-full w-full flex items-center justify-center p-4">
-            <img
+            <Image
               src={imageData}
               alt="Flood risk visualization"
+              width={800}
+              height={600}
               className="max-w-full max-h-full object-contain border-2 border-gray-600"
               style={{
                 imageRendering: "pixelated", // Preserve sharp edges for flood data
               }}
               onLoad={(e) => {
-                const img = e.target as HTMLImageElement;
+                const img = e.currentTarget;
                 console.log(
                   `Flood image dimensions: ${img.naturalWidth}x${img.naturalHeight}`
                 );

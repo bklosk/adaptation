@@ -209,10 +209,11 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
       coordinateSystem: 1, // COORDINATE_SYSTEM.LNGLAT
       modelMatrix: null,
       material: {
-        ambient: 0.35,
-        diffuse: 0.6,
-        shininess: 32,
-        specularColor: [255, 255, 255],
+        // Slightly softer lighting to avoid overly bright highlights
+        ambient: 0.3,
+        diffuse: 0.4,
+        shininess: 16,
+        specularColor: [180, 180, 180],
       },
       parameters: {
         depthTest: true,
