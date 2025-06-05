@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ViewState } from "./types";
 
 interface CameraControlsProps {
@@ -14,9 +14,35 @@ const CameraControls: React.FC<CameraControlsProps> = ({
   onViewStateChange,
   onResetView,
 }) => {
+  const [isMinimized, setIsMinimized] = useState(false);
   const handleSliderChange = (property: keyof ViewState, value: number) => {
     onViewStateChange({ [property]: value });
   };
+
+  if (isMinimized) {
+    return (
+      <button
+        onClick={() => setIsMinimized(false)}
+        className="backdrop-blur-sm p-2 shadow-lg hover:bg-gray-700 transition-all border-2 border-white font-space-grotesk"
+        style={{ backgroundColor: "#1B2223" }}
+        title="Camera Controls"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+          <circle cx="12" cy="13" r="4" />
+        </svg>
+      </button>
+    );
+  }
 
   return (
     <div
@@ -28,12 +54,21 @@ const CameraControls: React.FC<CameraControlsProps> = ({
           <h3 className="text-sm font-black text-white font-space-grotesk">
             Camera Controls
           </h3>
-          <button
-            onClick={onResetView}
-            className="px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors border border-blue-600 font-space-grotesk font-black"
-          >
-            Reset View
-          </button>
+          <div className="flex space-x-2 items-center">
+            <button
+              onClick={onResetView}
+              className="px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors border border-blue-600 font-space-grotesk font-black"
+            >
+              Reset View
+            </button>
+            <button
+              onClick={() => setIsMinimized(true)}
+              className="text-gray-300 hover:text-white text-lg leading-none font-black"
+              title="Hide Camera Controls"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Zoom Control */}
