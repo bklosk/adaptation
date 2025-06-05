@@ -54,7 +54,8 @@ import { PointCloudVisualization } from "../components/visualization";
 - **Advanced Camera Controls**: Interactive controls for zoom, pitch, bearing with preset views
 - **Enhanced 3D Navigation**: Smooth panning, rotation, and zooming with inertia
 - **Keyboard Navigation**: Full keyboard support for camera movement and control
-- **Better Point Cloud Rendering**: Improved depth testing and material properties for realistic 3D visualization
+ - **Better Point Cloud Rendering**: Improved depth testing and material properties for realistic 3D visualization
+ - **Softer Lighting**: Reduced specular highlights for a less harsh light source
 
 ## Camera Controls
 
