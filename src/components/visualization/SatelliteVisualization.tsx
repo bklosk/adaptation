@@ -7,15 +7,130 @@ import "mapbox-gl/dist/mapbox-gl.css";
 interface SatelliteVisualizationProps {
   address: string;
   imageSize?: string;
+  resolution?: number;
 }
 
 const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   address,
+  resolution = 2048,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFloodLoading, setIsFloodLoading] = useState<boolean>(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const floodImageUrl = useRef<string | null>(null);
+
+  // Clean up flood layer and source
+  const cleanupFloodLayer = useCallback(() => {
+    if (!map.current) return;
+
+    // Remove layer if it exists
+    if (map.current.getLayer("flood-layer")) {
+      map.current.removeLayer("flood-layer");
+    }
+
+    // Remove source if it exists
+    if (map.current.getSource("flood-source")) {
+      map.current.removeSource("flood-source");
+    }
+
+    // Revoke previous blob URL to prevent memory leaks
+    if (floodImageUrl.current) {
+      URL.revokeObjectURL(floodImageUrl.current);
+      floodImageUrl.current = null;
+    }
+  }, []);
+
+  // Fetch flood raster from API
+  const fetchFloodRaster = useCallback(
+    async (bounds: mapboxgl.LngLatBounds) => {
+      if (!address) return;
+
+      setIsFloodLoading(true);
+      try {
+        // Calculate bounding box size in meters (approximate)
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+
+        // Rough conversion: 1 degree latitude ≈ 111,000 meters
+        const latDiff = ne.lat - sw.lat;
+        const lngDiff = ne.lng - sw.lng;
+        const avgLat = (ne.lat + sw.lat) / 2;
+
+        // Account for longitude compression at higher latitudes
+        const latMeters = latDiff * 111000;
+        const lngMeters = lngDiff * 111000 * Math.cos((avgLat * Math.PI) / 180);
+
+        // Use the larger dimension for square bbox
+        const bboxSize = Math.max(latMeters, lngMeters);
+
+        const params = new URLSearchParams({
+          address: address,
+          bbox_m: bboxSize.toString(),
+          resolution: resolution.toString(),
+        });
+
+        const response = await fetch(
+          `http://localhost:8000/flood-overhead?${params}`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch flood data: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const blob = await response.blob();
+
+        // Clean up previous flood layer
+        cleanupFloodLayer();
+
+        // Create blob URL for the image
+        floodImageUrl.current = URL.createObjectURL(blob);
+
+        // Add flood raster source and layer
+        if (map.current) {
+          // Get current bounds for the raster coordinates
+          const currentBounds = map.current.getBounds();
+          if (currentBounds) {
+            const coords: [
+              [number, number],
+              [number, number],
+              [number, number],
+              [number, number]
+            ] = [
+              [currentBounds.getWest(), currentBounds.getNorth()],
+              [currentBounds.getEast(), currentBounds.getNorth()],
+              [currentBounds.getEast(), currentBounds.getSouth()],
+              [currentBounds.getWest(), currentBounds.getSouth()],
+            ];
+
+            map.current.addSource("flood-source", {
+              type: "image",
+              url: floodImageUrl.current,
+              coordinates: coords,
+            });
+
+            map.current.addLayer({
+              id: "flood-layer",
+              type: "raster",
+              source: "flood-source",
+              paint: {
+                "raster-opacity": 0.6,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch flood raster:", error);
+        // Don't set main error state for flood layer failures
+      } finally {
+        setIsFloodLoading(false);
+      }
+    },
+    [address, resolution, cleanupFloodLayer]
+  );
 
   // Geocode address to get coordinates
   const geocodeAddress = async (
@@ -89,13 +204,40 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
         logoPosition: "bottom-right", // Position logo (we'll hide it with CSS)
       });
 
-      // Remove the Mapbox logo
+      // Remove the Mapbox logo and load flood raster
       map.current.on("load", () => {
         const logo = document.querySelector(
           ".mapboxgl-ctrl-logo"
         ) as HTMLElement;
         if (logo) {
           logo.style.display = "none";
+        }
+
+        // Load initial flood raster
+        if (map.current) {
+          const bounds = map.current.getBounds();
+          if (bounds) {
+            fetchFloodRaster(bounds);
+          }
+        }
+      });
+
+      // Add event listeners for map view changes
+      map.current.on("moveend", () => {
+        if (map.current) {
+          const bounds = map.current.getBounds();
+          if (bounds) {
+            fetchFloodRaster(bounds);
+          }
+        }
+      });
+
+      map.current.on("zoomend", () => {
+        if (map.current) {
+          const bounds = map.current.getBounds();
+          if (bounds) {
+            fetchFloodRaster(bounds);
+          }
         }
       });
     } catch (error) {
@@ -106,7 +248,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [address]);
+  }, [address, fetchFloodRaster]);
 
   useEffect(() => {
     initializeMap();
@@ -116,8 +258,10 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
       if (map.current) {
         map.current.remove();
       }
+      // Clean up flood layer resources
+      cleanupFloodLayer();
     };
-  }, [initializeMap]);
+  }, [initializeMap, cleanupFloodLayer]);
 
   // Hide any remaining Mapbox UI elements
   useEffect(() => {
@@ -165,7 +309,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
 
       {/* Content */}
       <div className="flex-1 relative overflow-hidden">
-        {isLoading && (
+        {(isLoading || isFloodLoading) && (
           <div
             className="absolute inset-0 flex items-center justify-center z-10"
             style={{ backgroundColor: "#1B2223" }}
@@ -173,7 +317,9 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
             <div className="text-center">
               <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent mx-auto mb-4" />
               <p className="text-gray-300 font-space-grotesk">
-                Loading satellite view...
+                {isLoading
+                  ? "Loading satellite view..."
+                  : "Loading flood data..."}
               </p>
             </div>
           </div>
@@ -233,8 +379,18 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           className="p-3 border-t-2 border-white flex justify-between items-center"
           style={{ backgroundColor: "#1B2223" }}
         >
-          <div className="text-xs text-gray-300 font-space-grotesk">
-            Satellite imagery for location
+          <div className="flex items-center space-x-4">
+            <div className="text-xs text-gray-300 font-space-grotesk">
+              Satellite imagery for location
+            </div>
+            {isFloodLoading && (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin h-3 w-3 border border-blue-400 border-t-transparent" />
+                <span className="text-xs text-blue-400 font-space-grotesk">
+                  Loading flood data
+                </span>
+              </div>
+            )}
           </div>
           <button
             onClick={handleRetry}
