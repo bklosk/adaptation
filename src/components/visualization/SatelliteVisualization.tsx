@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SatelliteVisualizationProps {
   address: string;
@@ -17,6 +18,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isFloodLoading, setIsFloodLoading] = useState<boolean>(false);
+  const [isFloodVisible, setIsFloodVisible] = useState<boolean>(true);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const floodImageUrl = useRef<string | null>(null);
@@ -25,14 +27,22 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   const cleanupFloodLayer = useCallback(() => {
     if (!map.current) return;
 
-    // Remove layer if it exists
-    if (map.current.getLayer("flood-layer")) {
-      map.current.removeLayer("flood-layer");
-    }
+    try {
+      // Check if map is still valid and loaded before attempting operations
+      if (!map.current.isStyleLoaded()) return;
 
-    // Remove source if it exists
-    if (map.current.getSource("flood-source")) {
-      map.current.removeSource("flood-source");
+      // Remove layer if it exists
+      if (map.current.getLayer("flood-layer")) {
+        map.current.removeLayer("flood-layer");
+      }
+
+      // Remove source if it exists
+      if (map.current.getSource("flood-source")) {
+        map.current.removeSource("flood-source");
+      }
+    } catch (error) {
+      // Silently handle errors that occur during cleanup (e.g., map already destroyed)
+      console.warn("Error during flood layer cleanup:", error);
     }
 
     // Revoke previous blob URL to prevent memory leaks
@@ -42,6 +52,86 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
     }
   }, []);
 
+  // Toggle flood layer visibility
+  const toggleFloodLayer = useCallback(() => {
+    if (!map.current) return;
+
+    try {
+      // Check if map is still valid and loaded before attempting operations
+      if (!map.current.isStyleLoaded()) return;
+
+      const newVisibility = !isFloodVisible;
+      setIsFloodVisible(newVisibility);
+
+      if (map.current.getLayer("flood-layer")) {
+        if (newVisibility) {
+          // Show layer: make visible and animate opacity from 0 to 0.6
+          map.current.setLayoutProperty("flood-layer", "visibility", "visible");
+          map.current.setPaintProperty("flood-layer", "raster-opacity", 0);
+
+          // Animate opacity increase
+          const startTime = Date.now();
+          const duration = 300; // 300ms
+          const targetOpacity = 0.6;
+
+          const animateIn = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = progress * targetOpacity;
+
+            if (map.current && map.current.getLayer("flood-layer")) {
+              map.current.setPaintProperty(
+                "flood-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateIn);
+            }
+          };
+          requestAnimationFrame(animateIn);
+        } else {
+          // Hide layer: animate opacity from 0.6 to 0, then hide
+          const startTime = Date.now();
+          const duration = 300; // 300ms
+          const startOpacity = 0.6;
+
+          const animateOut = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = startOpacity * (1 - progress);
+
+            if (map.current && map.current.getLayer("flood-layer")) {
+              map.current.setPaintProperty(
+                "flood-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+
+              if (progress >= 1) {
+                // Animation complete, hide the layer
+                map.current.setLayoutProperty(
+                  "flood-layer",
+                  "visibility",
+                  "none"
+                );
+              }
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateOut);
+            }
+          };
+          requestAnimationFrame(animateOut);
+        }
+      }
+    } catch (error) {
+      console.warn("Error toggling flood layer:", error);
+    }
+  }, [isFloodVisible]);
+
   // Fetch flood raster from API
   const fetchFloodRaster = useCallback(
     async (bounds: mapboxgl.LngLatBounds) => {
@@ -49,21 +139,32 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
 
       setIsFloodLoading(true);
       try {
-        // Calculate bounding box size in meters (approximate)
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
+        // Get the center of the current map bounds
+        const center = bounds.getCenter();
 
-        // Rough conversion: 1 degree latitude ≈ 111,000 meters
-        const latDiff = ne.lat - sw.lat;
-        const lngDiff = ne.lng - sw.lng;
-        const avgLat = (ne.lat + sw.lat) / 2;
+        // Use a fixed bbox size that covers the visible area well
+        // Calculate approximate meters per degree at this latitude
+        const metersPerDegree = 111000 * Math.cos((center.lat * Math.PI) / 180);
 
-        // Account for longitude compression at higher latitudes
-        const latMeters = latDiff * 111000;
-        const lngMeters = lngDiff * 111000 * Math.cos((avgLat * Math.PI) / 180);
+        // Calculate the map bounds in meters
+        const latSpan = (bounds.getNorth() - bounds.getSouth()) * 111000;
+        const lngSpan = (bounds.getEast() - bounds.getWest()) * metersPerDegree;
 
-        // Use the larger dimension for square bbox
-        const bboxSize = Math.max(latMeters, lngMeters);
+        // Use the larger dimension and add some padding
+        const bboxSize = Math.max(latSpan, lngSpan) * 1.2; // 20% padding
+
+        console.log("Flood raster request:", {
+          center: { lat: center.lat, lng: center.lng },
+          bounds: {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest(),
+          },
+          bboxSize,
+          latSpan,
+          lngSpan,
+        });
 
         const params = new URLSearchParams({
           address: address,
@@ -91,36 +192,54 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
 
         // Add flood raster source and layer
         if (map.current) {
-          // Get current bounds for the raster coordinates
-          const currentBounds = map.current.getBounds();
-          if (currentBounds) {
-            const coords: [
-              [number, number],
-              [number, number],
-              [number, number],
-              [number, number]
-            ] = [
-              [currentBounds.getWest(), currentBounds.getNorth()],
-              [currentBounds.getEast(), currentBounds.getNorth()],
-              [currentBounds.getEast(), currentBounds.getSouth()],
-              [currentBounds.getWest(), currentBounds.getSouth()],
-            ];
+          // The API returns a square raster centered on the geocoded address
+          // We need to calculate the proper coordinates based on the bbox size and center
+          const center = bounds.getCenter();
 
-            map.current.addSource("flood-source", {
-              type: "image",
-              url: floodImageUrl.current,
-              coordinates: coords,
-            });
+          // Calculate the half-span in degrees based on the bbox size in meters
+          const metersPerDegreeLat = 111000;
+          const metersPerDegreeLng =
+            111000 * Math.cos((center.lat * Math.PI) / 180);
 
-            map.current.addLayer({
-              id: "flood-layer",
-              type: "raster",
-              source: "flood-source",
-              paint: {
-                "raster-opacity": 0.6,
-              },
-            });
-          }
+          const halfSpanLat = bboxSize / 2 / metersPerDegreeLat;
+          const halfSpanLng = bboxSize / 2 / metersPerDegreeLng;
+
+          console.log("Raster coordinates calculation:", {
+            center: { lat: center.lat, lng: center.lng },
+            bboxSize,
+            halfSpanLat,
+            halfSpanLng,
+            metersPerDegreeLat,
+            metersPerDegreeLng,
+          });
+
+          // Create coordinates for a square raster centered on the address
+          const coords: [
+            [number, number],
+            [number, number],
+            [number, number],
+            [number, number]
+          ] = [
+            [center.lng - halfSpanLng, center.lat + halfSpanLat], // top-left
+            [center.lng + halfSpanLng, center.lat + halfSpanLat], // top-right
+            [center.lng + halfSpanLng, center.lat - halfSpanLat], // bottom-right
+            [center.lng - halfSpanLng, center.lat - halfSpanLat], // bottom-left
+          ];
+
+          map.current.addSource("flood-source", {
+            type: "image",
+            url: floodImageUrl.current,
+            coordinates: coords,
+          });
+
+          map.current.addLayer({
+            id: "flood-layer",
+            type: "raster",
+            source: "flood-source",
+            paint: {
+              "raster-opacity": 0.6,
+            },
+          });
         }
       } catch (error) {
         console.error("Failed to fetch flood raster:", error);
@@ -299,9 +418,30 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
         className="p-4 shadow-sm border-b-2 border-white"
         style={{ backgroundColor: "#1B2223" }}
       >
-        <h2 className="text-lg font-black text-white mb-1 font-space-grotesk">
-          Satellite View
-        </h2>
+        <div className="flex items-center justify-between mb-1">
+          <AnimatePresence mode="wait">
+            <motion.h2
+              key={isFloodVisible ? "flood" : "satellite"}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+              className="text-lg font-black text-white font-space-grotesk"
+            >
+              {isFloodVisible ? "Flood Risk" : "Satellite View"}
+            </motion.h2>
+          </AnimatePresence>
+          <button
+            onClick={toggleFloodLayer}
+            className={`px-2 py-1 text-xs rounded transition-colors border font-space-grotesk ${
+              isFloodVisible
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
+            }`}
+          >
+            {isFloodVisible ? "Hide" : "Show"} Flood
+          </button>
+        </div>
         <p className="text-sm text-gray-300 truncate font-space-grotesk">
           {address}
         </p>
@@ -392,12 +532,24 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
               </div>
             )}
           </div>
-          <button
-            onClick={handleRetry}
-            className="px-3 py-1 text-xs bg-gray-700 text-white hover:bg-gray-600 transition-colors border border-white font-space-grotesk"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={toggleFloodLayer}
+              className={`px-3 py-1 text-xs transition-colors border font-space-grotesk ${
+                isFloodVisible
+                  ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                  : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
+              }`}
+            >
+              {isFloodVisible ? "Hide" : "Show"} Flood
+            </button>
+            <button
+              onClick={handleRetry}
+              className="px-3 py-1 text-xs bg-gray-700 text-white hover:bg-gray-600 transition-colors border border-white font-space-grotesk"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       )}
     </div>
