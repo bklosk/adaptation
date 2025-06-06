@@ -88,12 +88,13 @@ export class PointCloudAPIService {
 
   static async fetchFloodOverhead(
     address: string,
-    bboxM: number = 64.0
+    bboxM: number = 64.0,
+    resolution: number = 2048
   ): Promise<Blob> {
     const response = await fetch(
       `${this.BASE_URL}/flood-overhead?address=${encodeURIComponent(
         address
-      )}&bbox_m=${bboxM}`
+      )}&bbox_m=${bboxM}&resolution=${resolution}`
     );
 
     if (!response.ok) {

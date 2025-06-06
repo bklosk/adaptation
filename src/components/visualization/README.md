@@ -8,7 +8,7 @@ This directory contains the organized point cloud visualization components for t
 
 - **`PointCloudVisualization.tsx`** - Main visualization component that orchestrates the entire point cloud display
 - **`SatelliteVisualization.tsx`** - Component for displaying satellite imagery using Mapbox
-- **`FloodVisualization.tsx`** - Component for displaying 100-year flood depth visualization from the API
+- **`FloodVisualization.tsx`** - Component for displaying ultra-high resolution (2048×2048px default) 100-year flood depth visualization from the API
 - **`StatusDisplay.tsx`** - Component for showing job status and point count
 - **`PointSizeControl.tsx`** - Component for controlling point size with a slider
 - **`CameraControls.tsx`** - Component for camera manipulation with zoom, pitch, bearing controls and preset views
@@ -27,7 +27,7 @@ This directory contains the organized point cloud visualization components for t
 ## Usage
 
 ```tsx
-import { PointCloudVisualization } from "../components/visualization";
+import { PointCloudVisualization, FloodVisualization } from "../components/visualization";
 
 <PointCloudVisualization
   address="1250 Wildwood Road, Boulder, CO"
@@ -39,7 +39,13 @@ import { PointCloudVisualization } from "../components/visualization";
     pitch: 60,
     bearing: 0,
   }}
-/>;
+/>
+
+<FloodVisualization
+  address="1250 Wildwood Road, Boulder, CO"
+  bboxM={64.0}
+  resolution={2048} // 2K resolution (optional, default is 2048)
+/>
 ```
 
 ## Features
@@ -54,8 +60,8 @@ import { PointCloudVisualization } from "../components/visualization";
 - **Advanced Camera Controls**: Interactive controls for zoom, pitch, bearing with preset views
 - **Enhanced 3D Navigation**: Smooth panning, rotation, and zooming with inertia
 - **Keyboard Navigation**: Full keyboard support for camera movement and control
- - **Better Point Cloud Rendering**: Improved depth testing and material properties for realistic 3D visualization
- - **Softer Lighting**: Reduced specular highlights for a less harsh light source
+- **Ultra-High Resolution Imaging**: FloodVisualization now supports 2048×2048 pixel resolution flood depth images by default with options up to 4096×4096
+- **Softer Lighting**: Reduced specular highlights for a less harsh light source
 
 ## Camera Controls
 

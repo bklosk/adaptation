@@ -31,7 +31,6 @@ export default function Home() {
     setShowEditForm(false);
   };
 
-
   const handleEditSubmit = (address: string, bufferKm: number) => {
     setCurrentAddress(address);
     setCurrentBufferKm(bufferKm);
@@ -152,7 +151,12 @@ export default function Home() {
 
                 {/* Flood Risk Visualization - Bottom Right (2/5 height) */}
                 <div className="h-2/5">
-                  <FloodVisualization address={currentAddress} bboxM={64.0} />
+                  <FloodVisualization
+                    address={currentAddress}
+                    bboxM={64.0}
+                    resolution={2048} // 2K resolution as standard
+                    enableHighRes={true} // Allow upgrading to higher resolution
+                  />
                 </div>
               </div>
             </div>
