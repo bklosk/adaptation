@@ -11,7 +11,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuHovered, setIsMenuHovered] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Navigation Rectangle - Hidden on medium and smaller screens */}
-        <div className="hidden md:flex flex-1 px-4 justify-center items-center border-b border-white lg:border-b-2 border-r lg:border-r-2">
+        <div className="hidden md:pl-12 md:flex flex-1 px-4 justify-start items-center border-b border-white lg:border-b-2 border-r lg:border-r-2">
           <nav className="flex space-x-8">
             {items.slice(0, 2).map((item, index) => (
               <a
@@ -81,9 +81,12 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Menu Rectangle - Hidden on medium and smaller screens */}
-        <div className="hidden md:flex w-16 px-2 justify-center items-center border-b border-white lg:border-b-2">
+        <div
+          className="hidden md:flex w-16 px-2 justify-center items-center border-b border-white lg:border-b-2"
+          onMouseEnter={() => setIsMenuHovered(true)}
+          onMouseLeave={() => setIsMenuHovered(false)}
+        >
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="text-white hover:text-gray-300 focus:outline-none focus:text-gray-300
                      transition-colors duration-200"
             aria-label="Toggle menu"
@@ -99,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({
                 strokeLinejoin="round"
                 strokeWidth={2}
                 d={
-                  isMenuOpen
+                  isMenuHovered
                     ? "M6 18L18 6M6 6l12 12"
                     : "M4 6h16M4 12h16M4 18h16"
                 }
@@ -109,9 +112,12 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Mobile Menu Button - Visible only on small screens */}
-        <div className="md:hidden flex w-16 justify-center items-center px-2 border-b border-white lg:border-b-2">
+        <div
+          className="md:hidden flex w-16 justify-center items-center px-2 border-b border-white lg:border-b-2"
+          onMouseEnter={() => setIsMenuHovered(true)}
+          onMouseLeave={() => setIsMenuHovered(false)}
+        >
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="text-white hover:text-gray-300 focus:outline-none focus:text-gray-300
                      transition-colors duration-200"
             aria-label="Toggle menu"
@@ -127,7 +133,7 @@ const Header: React.FC<HeaderProps> = ({
                 strokeLinejoin="round"
                 strokeWidth={2}
                 d={
-                  isMenuOpen
+                  isMenuHovered
                     ? "M6 18L18 6M6 6l12 12"
                     : "M4 6h16M4 12h16M4 18h16"
                 }
@@ -138,25 +144,26 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Dropdown Menu */}
-      {isMenuOpen && (
+      {isMenuHovered && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="absolute top-full left-0 w-full z-60"
+          className="absolute top-full left-0 w-full z-60 min-h-48"
           style={{ backgroundColor: "#3D3D3E" }}
+          onMouseEnter={() => setIsMenuHovered(true)}
+          onMouseLeave={() => setIsMenuHovered(false)}
         >
           {items.slice(2).map((item, index) => (
             <a
               key={index}
               href="#"
-              className="block px-4 py-3 text-white font-medium text-sm sm:text-base
+              className="block px-4 py-6 text-white font-medium text-lg
                        border-b border-white lg:border-b-2 last:border-b-0
                        hover:text-gray-300
                        focus:outline-none focus:text-gray-300
                        transition-colors duration-200 cursor-pointer
                        font-space-grotesk"
-              onClick={() => setIsMenuOpen(false)}
             >
               {item}
             </a>
