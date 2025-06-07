@@ -7,6 +7,21 @@ interface FloodAnalysisProps {
   bboxM?: number;
 }
 
+interface Intervention {
+  intervention_name: string;
+  placement_description: string;
+  capital_cost_low_usd: number;
+  capital_cost_high_usd: number;
+  annual_maintenance_usd: number;
+  risk_reduction_pct: number;
+  regulatory_notes: string;
+}
+
+interface AnalysisData {
+  interventions: Intervention[];
+  assumptions: string[];
+}
+
 interface FloodAnalysisResponse {
   success: boolean;
   message: string;
@@ -27,6 +42,45 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [analysisData, setAnalysisData] =
     useState<FloodAnalysisResponse | null>(null);
+  const [parsedAnalysis, setParsedAnalysis] = useState<AnalysisData | null>(
+    null
+  );
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number): string => {
+    if (amount >= 1000000) {
+      return `$${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `$${(amount / 1000).toFixed(0)}K`;
+    } else {
+      return `$${amount.toLocaleString()}`;
+    }
+  };
+
+  // Helper function to get intervention icon
+  const getInterventionIcon = (name: string): string => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("rain garden") || lowerName.includes("bioswale"))
+      return "🌱";
+    if (lowerName.includes("french drain") || lowerName.includes("drain"))
+      return "🔧";
+    if (lowerName.includes("berm") || lowerName.includes("levee")) return "🏔️";
+    if (lowerName.includes("floodproof") || lowerName.includes("waterproof"))
+      return "🛡️";
+    if (lowerName.includes("elevate") || lowerName.includes("raise"))
+      return "⬆️";
+    if (lowerName.includes("barrier") || lowerName.includes("wall"))
+      return "🧱";
+    return "🔨";
+  };
+
+  // Helper function to get risk reduction color
+  const getRiskReductionColor = (percentage: number): string => {
+    if (percentage >= 50) return "bg-green-600";
+    if (percentage >= 25) return "bg-yellow-600";
+    if (percentage >= 10) return "bg-orange-600";
+    return "bg-red-600";
+  };
 
   const fetchFloodAnalysis = useCallback(async () => {
     if (!address) return;
@@ -34,6 +88,7 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
     setIsLoading(true);
     setError(null);
     setAnalysisData(null);
+    setParsedAnalysis(null);
 
     try {
       const response = await fetch("http://localhost:8000/analyze-flood", {
@@ -55,6 +110,19 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
 
       const data: FloodAnalysisResponse = await response.json();
       setAnalysisData(data);
+
+      // Parse the analysis JSON string
+      if (data.analysis) {
+        try {
+          const parsed: AnalysisData = JSON.parse(data.analysis);
+          setParsedAnalysis(parsed);
+        } catch (parseError) {
+          console.error("Failed to parse analysis JSON:", parseError);
+          setParsedAnalysis(null);
+        }
+      } else {
+        setParsedAnalysis(null);
+      }
 
       if (!data.success) {
         throw new Error(data.error || data.message || "Analysis failed");
@@ -187,15 +255,121 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
                 )}
               </div>
 
-              {/* Main Analysis Content */}
-              <div className="bg-gray-900 border-2 border-gray-600 rounded-lg p-4">
-                <h4 className="text-green-400 font-space-grotesk font-bold mb-3">
-                  📋 Comprehensive Flood Risk Assessment
-                </h4>
-                <div className="text-gray-200 font-mono text-sm whitespace-pre-wrap leading-relaxed">
-                  {analysisData.analysis || "No analysis content available"}
+              {/* Interventions List */}
+              {parsedAnalysis?.interventions &&
+                parsedAnalysis.interventions.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-green-400 font-space-grotesk font-bold mb-4 flex items-center">
+                      <span className="mr-2">🛡️</span>
+                      Recommended Flood Mitigation Interventions
+                    </h4>
+                    {parsedAnalysis.interventions.map((intervention, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-900 border border-gray-600 rounded-lg p-4 hover:border-blue-500 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h5 className="text-blue-300 font-space-grotesk font-bold text-lg">
+                            {intervention.intervention_name}
+                          </h5>
+                          <div className="text-right">
+                            {" "}
+                            <div
+                              className={`text-white px-2 py-1 rounded text-xs font-bold ${getRiskReductionColor(
+                                intervention.risk_reduction_pct
+                              )}`}
+                            >
+                              -{intervention.risk_reduction_pct}% Risk
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+                          {intervention.placement_description}
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div className="bg-gray-800 p-3 rounded">
+                            <div className="text-xs text-gray-400 mb-1">
+                              Capital Cost
+                            </div>
+                            <div className="text-white font-mono">
+                              {formatCurrency(
+                                intervention.capital_cost_low_usd
+                              )}{" "}
+                              -{" "}
+                              {formatCurrency(
+                                intervention.capital_cost_high_usd
+                              )}
+                            </div>
+                          </div>
+                          <div className="bg-gray-800 p-3 rounded">
+                            <div className="text-xs text-gray-400 mb-1">
+                              Annual Maintenance
+                            </div>
+                            <div className="text-white font-mono">
+                              {formatCurrency(
+                                intervention.annual_maintenance_usd
+                              )}
+                              /year
+                            </div>
+                          </div>
+                          <div className="bg-gray-800 p-3 rounded">
+                            <div className="text-xs text-gray-400 mb-1">
+                              Risk Reduction
+                            </div>
+                            <div className="text-green-400 font-mono font-bold">
+                              {intervention.risk_reduction_pct}%
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-yellow-900/30 border border-yellow-600/50 rounded p-3">
+                          <div className="text-xs text-yellow-400 mb-1 font-bold">
+                            ⚠️ Regulatory Notes
+                          </div>
+                          <div className="text-yellow-200 text-xs">
+                            {intervention.regulatory_notes}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              {/* Assumptions */}
+              {parsedAnalysis?.assumptions &&
+                parsedAnalysis.assumptions.length > 0 && (
+                  <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
+                    <h4 className="text-orange-400 font-space-grotesk font-bold mb-3 flex items-center">
+                      <span className="mr-2">ℹ️</span>
+                      Analysis Assumptions
+                    </h4>
+                    <ul className="space-y-2">
+                      {parsedAnalysis.assumptions.map((assumption, index) => (
+                        <li
+                          key={index}
+                          className="text-gray-300 text-sm flex items-start"
+                        >
+                          <span className="text-orange-400 mr-2 mt-1">•</span>
+                          <span>{assumption}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              {/* Fallback for raw analysis */}
+              {!parsedAnalysis && analysisData?.analysis && (
+                <div className="bg-gray-900 border-2 border-gray-600 rounded-lg p-4">
+                  <h4 className="text-green-400 font-space-grotesk font-bold mb-3">
+                    📋 Raw Analysis Data
+                  </h4>
+                  <div className="text-gray-200 font-mono text-sm whitespace-pre-wrap leading-relaxed">
+                    {analysisData.analysis}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Status Information */}
               <div className="bg-gray-800 border border-gray-600 rounded-lg p-3">

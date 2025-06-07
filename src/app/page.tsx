@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Header from "../components/Header";
 import {
   PointCloudVisualization,
-  FloodVisualization,
+  FloodAnalysis,
 } from "../components/visualization";
 import SatelliteVisualization from "../components/visualization/SatelliteVisualization";
 import LocationForm from "../components/LocationForm";
@@ -149,14 +149,9 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Flood Risk Visualization - Bottom Right (2/5 height) */}
+                {/* Flood Risk Analysis - Bottom Right (2/5 height) */}
                 <div className="h-2/5">
-                  <FloodVisualization
-                    address={currentAddress}
-                    bboxM={64.0}
-                    resolution={2048} // 2K resolution as standard
-                    enableHighRes={true} // Allow upgrading to higher resolution
-                  />
+                  <FloodAnalysis address={currentAddress} bboxM={64.0} />
                 </div>
               </div>
             </div>
