@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ViewState } from "./types";
+import { ViewState } from "../data/types";
 
 interface CameraControlsProps {
   viewState: ViewState;

@@ -3,13 +3,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import DeckGL from "@deck.gl/react";
 import { PointCloudLayer } from "@deck.gl/layers";
-import { PointData, ViewState } from "./types";
-import { PointCloudAPIService } from "./apiService";
-import { PointCloudDataProcessor } from "./dataProcessor";
-import StatusDisplay, { JobStatus, JobDetails } from "./StatusDisplay";
-import PointSizeControl from "./PointSizeControl";
-import CameraControls from "./CameraControls";
-import KeyboardShortcuts from "./KeyboardShortcuts";
+import { PointData, ViewState } from "../data/types"; // Corrected import path
+import { PointCloudAPIService } from "../api/apiService"; // Corrected import path
+import { PointCloudDataProcessor } from "../data/dataProcessor"; // Corrected import path
+import StatusDisplay, { JobDetails } from "../ui/StatusDisplay"; // Corrected import path
+import { JobStatusString as JobStatus } from "../ui/StatusDisplay"; // Corrected import path
+import PointSizeControl from "../ui/PointSizeControl"; // Corrected import path
+import CameraControls from "../ui/CameraControls"; // Corrected import path
+import KeyboardShortcuts from "../ui/KeyboardShortcuts"; // Corrected import path
 
 interface PointCloudVisualizationProps {
   address?: string;
@@ -227,7 +228,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     if (pointCloudData.length > 0 && initialBounds) {
       const { center, bounds } =
         PointCloudDataProcessor.transformCoordinates(pointCloudData);
-      const zoomLevel = PointCloudDataProcessor.calculateOptimalZoom(bounds) + 0.5;
+      const zoomLevel =
+        PointCloudDataProcessor.calculateOptimalZoom(bounds) + 0.5;
 
       setViewState({
         longitude: center[0],
@@ -249,7 +251,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     (evt: { viewState: ViewState }) => {
       const factor = 0.5; // Global sensitivity factor
       setViewState((prev) => {
-        const vs = evt.viewState as ViewState;
+        const vs = evt.viewState;
         return {
           ...prev,
           longitude: prev.longitude + (vs.longitude - prev.longitude) * factor,
@@ -380,7 +382,8 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     >
       <DeckGL
         viewState={viewState}
-        onViewStateChange={handleDeckViewStateChange}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onViewStateChange={handleDeckViewStateChange as any}
         controller={{
           touchRotate: true,
           touchZoom: true,

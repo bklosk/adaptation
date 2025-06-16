@@ -1,4 +1,4 @@
-import { JobStatus, ProcessingRequest, SatelliteRequest } from "./types";
+import { JobStatus, ProcessingRequest, SatelliteRequest } from "../data/types";
 
 export class PointCloudAPIService {
   private static readonly BASE_URL = "http://localhost:8000";

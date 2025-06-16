@@ -58,6 +58,7 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
   };
 
   // Helper function to get intervention icon
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getInterventionIcon = (name: string): string => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("rain garden") || lowerName.includes("bioswale"))

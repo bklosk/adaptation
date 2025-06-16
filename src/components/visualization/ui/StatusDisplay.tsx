@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 // Types
-export type JobStatus =
+export type JobStatusString =
   | "completed"
   | "failed"
   | "processing"
@@ -30,10 +30,11 @@ export interface JobDetails {
   completed_at?: string | null;
   error_message?: string | null;
   metadata?: JobMetadata;
+  status?: JobStatusString; // Added status field
 }
 
 export interface StatusDisplayProps {
-  status: JobStatus;
+  status: JobStatusString;
   pointCount: number;
   downloadProgress?: number;
   isDownloading?: boolean;
@@ -41,7 +42,7 @@ export interface StatusDisplayProps {
 }
 
 // Constants
-const STATUS_COLORS: Record<JobStatus, string> = {
+const STATUS_COLORS: Record<JobStatusString, string> = {
   completed: "text-green-600",
   failed: "text-red-600",
   processing: "text-blue-600",
@@ -73,7 +74,7 @@ const formatCoordinates = (coordinates: Coordinates): string => {
 
 // Sub-components
 interface StatusIndicatorProps {
-  status: JobStatus;
+  status: JobStatusString;
 }
 
 const StatusIndicator = ({ status }: StatusIndicatorProps) => (

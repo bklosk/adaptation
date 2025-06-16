@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { PointCloudAPIService } from "./apiService";
+import { PointCloudAPIService } from "../api/apiService";
 
 interface FloodVisualizationProps {
   address: string;

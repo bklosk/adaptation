@@ -5,8 +5,8 @@ import Header from "../components/Header";
 import {
   PointCloudVisualization,
   FloodAnalysis,
+  SatelliteVisualization, // Corrected import
 } from "../components/visualization";
-import SatelliteVisualization from "../components/visualization/SatelliteVisualization";
 import LocationForm from "../components/LocationForm";
 
 export default function Home() {
