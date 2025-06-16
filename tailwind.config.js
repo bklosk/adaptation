@@ -9,6 +9,7 @@ module.exports = {
     extend: {
       fontFamily: {
         "space-grotesk": ["var(--font-space-grotesk)", "sans-serif"],
+        "comic-neue": ["var(--font-comic-neue)", "sans-serif"],
         sans: ["var(--font-geist-sans)", "sans-serif"],
         mono: ["var(--font-geist-mono)", "monospace"],
       },

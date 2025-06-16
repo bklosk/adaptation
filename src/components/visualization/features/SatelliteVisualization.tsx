@@ -172,9 +172,9 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           resolution: resolution.toString(),
         });
 
-        const response = await fetch(
-          `http://localhost:8000/flood-overhead?${params}`
-        );
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const response = await fetch(`${apiUrl}/flood-overhead?${params}`);
 
         if (!response.ok) {
           throw new Error(

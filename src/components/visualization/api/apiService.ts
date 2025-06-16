@@ -1,7 +1,8 @@
 import { JobStatus, ProcessingRequest, SatelliteRequest } from "../data/types";
 
 export class PointCloudAPIService {
-  private static readonly BASE_URL = "http://localhost:8000";
+  private static readonly BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   static async startProcessingJob(
     request: ProcessingRequest

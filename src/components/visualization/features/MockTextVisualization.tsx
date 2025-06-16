@@ -36,7 +36,8 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
     setAnalysisData(null);
 
     try {
-      const response = await fetch("http://localhost:8000/analyze-flood", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/analyze-flood`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

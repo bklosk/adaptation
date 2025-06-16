@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Header from "../components/Header";
+import FaqSection from "../components/FaqSection";
 import {
   PointCloudVisualization,
   FloodAnalysis,
-  SatelliteVisualization, // Corrected import
+  SatelliteVisualization,
 } from "../components/visualization";
 import LocationForm from "../components/LocationForm";
 
@@ -41,21 +42,19 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#1B2223" }}>
+    <div className="min-h-screen bg-stone-100 dark:bg-gray-900">
       <Header />
       {/* Main content with padding to account for fixed header */}
-      <main className="pt-20">
+      {/* Header is h-20 (5rem) + top-4 (1rem margin) = 6rem total offset */}
+      <main className="pt-16">
         {!showVisualization ? (
-          <div
-            className="min-h-[calc(100vh-5rem)] flex items-center justify-center p-4"
-            style={{ backgroundColor: "#1B2223" }}
-          >
+          <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center p-4 bg-stone-100 dark:bg-gray-900">
             <div className="max-w-2xl w-full">
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-black text-white mb-4 font-space-grotesk">
+                <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 font-space-grotesk">
                   Point Cloud Visualization
                 </h1>
-                <p className="text-lg text-gray-300 font-space-grotesk">
+                <p className="text-lg text-gray-700 dark:text-gray-300 font-space-grotesk">
                   Enter an address to generate and visualize 3D point cloud data
                   from geographical coordinates.
                 </p>
@@ -66,37 +65,20 @@ export default function Home() {
                 initialAddress="1250 Wildwood Road, Boulder, CO"
                 initialBufferKm={1.0}
               />
+
+              {/* Solarpunk House and FAQ Section */}
+              <FaqSection />
             </div>
           </div>
         ) : (
-          <div className="relative h-[calc(100vh-5rem)] w-full overflow-hidden">
+          <div className="relative h-[calc(100vh-7rem)] w-full overflow-hidden">
             {/* Back button */}
             <button
               onClick={handleNewSearch}
-              className="absolute top-4 left-4 z-20 backdrop-blur-sm text-white px-4 py-2 shadow-md hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-space-grotesk border-2 border-white"
-              style={{ backgroundColor: "#1B2223" }}
+              className="absolute top-4 left-4 z-20 backdrop-blur-sm text-white px-4 py-2 shadow-md hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-space-grotesk border-2 border-white bg-gray-800 dark:bg-gray-900"
             >
               ← New Search
             </button>
-
-            {/* Current location info with edit button - centered at top to avoid all UI conflicts */}
-            {/* <div
-              className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 backdrop-blur-sm text-white px-4 py-2 shadow-md max-w-xs sm:max-w-sm border-2 border-white"
-              style={{ backgroundColor: "#1B2223" }}
-            >
-              <div className="text-sm font-space-grotesk text-center">
-                <div className="font-black truncate">{currentAddress}</div>
-                <div className="text-gray-300 mb-2">
-                  Radius: {currentBufferKm} km
-                </div>
-                <button
-                  onClick={handleEditLocation}
-                  className="text-blue-400 hover:text-blue-300 text-xs font-bold"
-                >
-                  Edit Location
-                </button>
-              </div>
-            </div> */}
 
             {/* Edit form overlay */}
             {showEditForm && (
@@ -104,8 +86,7 @@ export default function Home() {
                 <div className="relative max-w-md w-full">
                   <button
                     onClick={() => setShowEditForm(false)}
-                    className="absolute -top-3 -right-3 text-white w-8 h-8 flex items-center justify-center hover:bg-gray-700 z-10 shadow-lg border-2 border-white font-space-grotesk font-black"
-                    style={{ backgroundColor: "#1B2223" }}
+                    className="absolute -top-3 -right-3 text-white w-8 h-8 flex items-center justify-center hover:bg-gray-700 z-10 shadow-lg border-2 border-white font-space-grotesk font-black bg-gray-800 dark:bg-gray-900"
                   >
                     ×
                   </button>
@@ -137,10 +118,7 @@ export default function Home() {
               </div>
 
               {/* Right panel with satellite view and flood risk */}
-              <div
-                className="w-1/2 h-full flex flex-col border-l-2 border-white"
-                style={{ backgroundColor: "#1B2223" }}
-              >
+              <div className="w-1/2 h-full flex flex-col border-l-2 border-white bg-gray-800 dark:bg-gray-900">
                 {/* Satellite Visualization - Top Right (Landscape - 3/5 height) */}
                 <div className="h-3/5 border-b-2 border-white">
                   <SatelliteVisualization
