@@ -82,7 +82,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
                 id="address"
                 value={address}
                 onChange={handleAddressChange}
-                placeholder="1250 Wildwood Road, Boulder, CO"
+                placeholder="Enter an address or location"
                 className={`w-full pr-20 pl-3 py-2 rounded-xl border-2 focus:outline-none transition-all duration-300 font-space-grotesk text-base backdrop-blur-sm ${
                   addressError
                     ? "border-red-400 focus:border-red-500 bg-red-50/80 dark:bg-red-900/20"
@@ -121,7 +121,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
           <p className="font-bold mb-3 text-center">Try these examples:</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {[
-              "1250 Wildwood Road, Boulder, CO",
+              "1600 Pennslyvania Ave NW, Washington, DC",
               "Central Park, New York, NY",
               "Golden Gate Bridge, San Francisco, CA",
               "Space Needle, Seattle, WA",
