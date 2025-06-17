@@ -19,9 +19,13 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isFloodLoading, setIsFloodLoading] = useState<boolean>(false);
   const [isFloodVisible, setIsFloodVisible] = useState<boolean>(true);
+  const [isWrtcLoading, setIsWrtcLoading] = useState<boolean>(false);
+  const [isWrtcVisible, setIsWrtcVisible] = useState<boolean>(false);
+  const [activeLayer, setActiveLayer] = useState<"flood" | "wrtc">("flood");
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const floodImageUrl = useRef<string | null>(null);
+  const wrtcImageUrl = useRef<string | null>(null);
 
   // Style for panels and buttons, consistent with LocationForm
   const panelStyle = {
@@ -76,6 +80,35 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
     }
   }, []);
 
+  // Clean up WRTC layer and source
+  const cleanupWrtcLayer = useCallback(() => {
+    if (!map.current) return;
+
+    try {
+      // Check if map is still valid and loaded before attempting operations
+      if (!map.current.isStyleLoaded()) return;
+
+      // Remove layer if it exists
+      if (map.current.getLayer("wrtc-layer")) {
+        map.current.removeLayer("wrtc-layer");
+      }
+
+      // Remove source if it exists
+      if (map.current.getSource("wrtc-source")) {
+        map.current.removeSource("wrtc-source");
+      }
+    } catch (error) {
+      // Silently handle errors that occur during cleanup (e.g., map already destroyed)
+      console.warn("Error during WRTC layer cleanup:", error);
+    }
+
+    // Revoke previous blob URL to prevent memory leaks
+    if (wrtcImageUrl.current) {
+      URL.revokeObjectURL(wrtcImageUrl.current);
+      wrtcImageUrl.current = null;
+    }
+  }, []);
+
   // Toggle flood layer visibility
   const toggleFloodLayer = useCallback(() => {
     if (!map.current) return;
@@ -84,6 +117,78 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
       // Check if map is still valid and loaded before attempting operations
       if (!map.current.isStyleLoaded()) return;
 
+      // If WRTC is currently active, switch to flood
+      if (activeLayer === "wrtc") {
+        setActiveLayer("flood");
+        setIsWrtcVisible(false);
+        setIsFloodVisible(true);
+
+        // Hide WRTC layer with animation
+        if (map.current.getLayer("wrtc-layer")) {
+          const startTime = Date.now();
+          const duration = 300;
+          const startOpacity = 0.6;
+
+          const animateOut = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = startOpacity * (1 - progress);
+
+            if (map.current && map.current.getLayer("wrtc-layer")) {
+              map.current.setPaintProperty(
+                "wrtc-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+
+              if (progress >= 1) {
+                map.current.setLayoutProperty(
+                  "wrtc-layer",
+                  "visibility",
+                  "none"
+                );
+              }
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateOut);
+            }
+          };
+          requestAnimationFrame(animateOut);
+        }
+
+        // Show flood layer with animation
+        if (map.current.getLayer("flood-layer")) {
+          map.current.setLayoutProperty("flood-layer", "visibility", "visible");
+          map.current.setPaintProperty("flood-layer", "raster-opacity", 0);
+
+          const startTime = Date.now();
+          const duration = 300;
+          const targetOpacity = 0.6;
+
+          const animateIn = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = progress * targetOpacity;
+
+            if (map.current && map.current.getLayer("flood-layer")) {
+              map.current.setPaintProperty(
+                "flood-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateIn);
+            }
+          };
+          requestAnimationFrame(animateIn);
+        }
+        return;
+      }
+
+      // Toggle flood layer visibility when it's already active
       const newVisibility = !isFloodVisible;
       setIsFloodVisible(newVisibility);
 
@@ -154,7 +259,353 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
     } catch (error) {
       console.warn("Error toggling flood layer:", error);
     }
-  }, [isFloodVisible]);
+  }, [isFloodVisible, activeLayer]);
+
+  // Toggle WRTC layer visibility
+  const toggleWrtcLayer = useCallback(() => {
+    if (!map.current) return;
+
+    try {
+      // Check if map is still valid and loaded before attempting operations
+      if (!map.current.isStyleLoaded()) return;
+
+      // If flood is currently active, switch to WRTC
+      if (activeLayer === "flood") {
+        setActiveLayer("wrtc");
+        setIsFloodVisible(false);
+        setIsWrtcVisible(true);
+
+        // Hide flood layer with animation
+        if (map.current.getLayer("flood-layer")) {
+          const startTime = Date.now();
+          const duration = 300;
+          const startOpacity = 0.6;
+
+          const animateOut = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = startOpacity * (1 - progress);
+
+            if (map.current && map.current.getLayer("flood-layer")) {
+              map.current.setPaintProperty(
+                "flood-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+
+              if (progress >= 1) {
+                map.current.setLayoutProperty(
+                  "flood-layer",
+                  "visibility",
+                  "none"
+                );
+              }
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateOut);
+            }
+          };
+          requestAnimationFrame(animateOut);
+        }
+
+        // Show WRTC layer with animation
+        if (map.current.getLayer("wrtc-layer")) {
+          map.current.setLayoutProperty("wrtc-layer", "visibility", "visible");
+          map.current.setPaintProperty("wrtc-layer", "raster-opacity", 0);
+
+          const startTime = Date.now();
+          const duration = 300;
+          const targetOpacity = 0.6;
+
+          const animateIn = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = progress * targetOpacity;
+
+            if (map.current && map.current.getLayer("wrtc-layer")) {
+              map.current.setPaintProperty(
+                "wrtc-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateIn);
+            }
+          };
+          requestAnimationFrame(animateIn);
+        }
+        return;
+      }
+
+      // Toggle WRTC layer visibility when it's already active
+      const newVisibility = !isWrtcVisible;
+      setIsWrtcVisible(newVisibility);
+
+      if (map.current.getLayer("wrtc-layer")) {
+        if (newVisibility) {
+          // Show layer: make visible and animate opacity from 0 to 0.6
+          map.current.setLayoutProperty("wrtc-layer", "visibility", "visible");
+          map.current.setPaintProperty("wrtc-layer", "raster-opacity", 0);
+
+          // Animate opacity increase
+          const startTime = Date.now();
+          const duration = 300; // 300ms
+          const targetOpacity = 0.6;
+
+          const animateIn = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = progress * targetOpacity;
+
+            if (map.current && map.current.getLayer("wrtc-layer")) {
+              map.current.setPaintProperty(
+                "wrtc-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateIn);
+            }
+          };
+          requestAnimationFrame(animateIn);
+        } else {
+          // Hide layer: animate opacity from 0.6 to 0, then hide
+          const startTime = Date.now();
+          const duration = 300; // 300ms
+          const startOpacity = 0.6;
+
+          const animateOut = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentOpacity = startOpacity * (1 - progress);
+
+            if (map.current && map.current.getLayer("wrtc-layer")) {
+              map.current.setPaintProperty(
+                "wrtc-layer",
+                "raster-opacity",
+                currentOpacity
+              );
+
+              if (progress >= 1) {
+                // Animation complete, hide the layer
+                map.current.setLayoutProperty(
+                  "wrtc-layer",
+                  "visibility",
+                  "none"
+                );
+              }
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(animateOut);
+            }
+          };
+          requestAnimationFrame(animateOut);
+        }
+      }
+    } catch (error) {
+      console.warn("Error toggling WRTC layer:", error);
+    }
+  }, [isWrtcVisible, activeLayer]);
+
+  // Get state abbreviation from address (improved approach)
+  const getStateFromAddress = (address: string): string => {
+    console.log("Extracting state from address:", address);
+
+    // Extract state from address - look for common patterns
+    const stateMatch = address.match(/,\s*([A-Z]{2})(?:\s|$|,)/i);
+    if (stateMatch) {
+      const state = stateMatch[1].toUpperCase();
+      console.log("Found state:", state);
+      return state;
+    }
+
+    // Look for state names and convert to abbreviations
+    const stateNames: Record<string, string> = {
+      alabama: "AL",
+      alaska: "AK",
+      arizona: "AZ",
+      arkansas: "AR",
+      california: "CA",
+      colorado: "CO",
+      connecticut: "CT",
+      delaware: "DE",
+      florida: "FL",
+      georgia: "GA",
+      hawaii: "HI",
+      idaho: "ID",
+      illinois: "IL",
+      indiana: "IN",
+      iowa: "IA",
+      kansas: "KS",
+      kentucky: "KY",
+      louisiana: "LA",
+      maine: "ME",
+      maryland: "MD",
+      massachusetts: "MA",
+      michigan: "MI",
+      minnesota: "MN",
+      mississippi: "MS",
+      missouri: "MO",
+      montana: "MT",
+      nebraska: "NE",
+      nevada: "NV",
+      "new hampshire": "NH",
+      "new jersey": "NJ",
+      "new mexico": "NM",
+      "new york": "NY",
+      "north carolina": "NC",
+      "north dakota": "ND",
+      ohio: "OH",
+      oklahoma: "OK",
+      oregon: "OR",
+      pennsylvania: "PA",
+      "rhode island": "RI",
+      "south carolina": "SC",
+      "south dakota": "SD",
+      tennessee: "TN",
+      texas: "TX",
+      utah: "UT",
+      vermont: "VT",
+      virginia: "VA",
+      washington: "WA",
+      "west virginia": "WV",
+      wisconsin: "WI",
+      wyoming: "WY",
+    };
+
+    const lowerAddress = address.toLowerCase();
+    for (const [name, abbr] of Object.entries(stateNames)) {
+      if (lowerAddress.includes(name)) {
+        console.log("Found state by name:", name, "->", abbr);
+        return abbr;
+      }
+    }
+
+    // Fallback to Colorado for demo purposes
+    console.log("No state found, defaulting to CO");
+    return "CO";
+  };
+
+  // Fetch WRTC raster from API using COG endpoint
+  const fetchWrtcRaster = useCallback(
+    async (bounds: mapboxgl.LngLatBounds) => {
+      if (!address) return;
+
+      setIsWrtcLoading(true);
+      try {
+        // Get state from address
+        const state = getStateFromAddress(address);
+
+        // Get bounds coordinates
+        const minLon = bounds.getWest();
+        const minLat = bounds.getSouth();
+        const maxLon = bounds.getEast();
+        const maxLat = bounds.getNorth();
+
+        console.log("WRTC raster request:", {
+          state,
+          bounds: { minLon, minLat, maxLon, maxLat },
+          layer: "wildfire_hazard_potential",
+        });
+
+        const params = new URLSearchParams({
+          state: state,
+          layer: "wildfire_hazard_potential",
+          min_lon: minLon.toString(),
+          min_lat: minLat.toString(),
+          max_lon: maxLon.toString(),
+          max_lat: maxLat.toString(),
+          width: "512",
+          height: "512",
+          colormap: "Reds",
+        });
+
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://api.climateriskplan.com";
+
+        console.log(
+          "Making WRTC API request to:",
+          `${apiUrl}/cog/raster?${params}`
+        );
+
+        const response = await fetch(`${apiUrl}/cog/raster?${params}`);
+
+        console.log("WRTC API response:", {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get("content-type"),
+          url: response.url,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("WRTC API error response:", errorText);
+          throw new Error(
+            `Failed to fetch WRTC data: ${response.status} ${response.statusText} - ${errorText}`
+          );
+        }
+
+        const blob = await response.blob();
+
+        console.log("WRTC blob received:", {
+          size: blob.size,
+          type: blob.type,
+        });
+
+        // Clean up previous WRTC layer
+        cleanupWrtcLayer();
+
+        // Create blob URL for the image
+        wrtcImageUrl.current = URL.createObjectURL(blob);
+
+        // Add WRTC raster source and layer
+        if (map.current) {
+          // Create coordinates for the raster based on the actual bounds
+          const coords: [
+            [number, number],
+            [number, number],
+            [number, number],
+            [number, number]
+          ] = [
+            [minLon, maxLat], // top-left
+            [maxLon, maxLat], // top-right
+            [maxLon, minLat], // bottom-right
+            [minLon, minLat], // bottom-left
+          ];
+
+          map.current.addSource("wrtc-source", {
+            type: "image",
+            url: wrtcImageUrl.current,
+            coordinates: coords,
+          });
+
+          map.current.addLayer({
+            id: "wrtc-layer",
+            type: "raster",
+            source: "wrtc-source",
+            paint: {
+              "raster-opacity": 0, // Always start hidden
+            },
+            layout: {
+              visibility: "none", // Always start hidden
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch WRTC raster:", error);
+        // Don't set main error state for WRTC layer failures
+      } finally {
+        setIsWrtcLoading(false);
+      }
+    },
+    [address, cleanupWrtcLayer]
+  );
 
   // Fetch flood raster from API
   const fetchFloodRaster = useCallback(
@@ -395,11 +846,12 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           mapContainer.current.style.overflow = "hidden";
         }
 
-        // Load initial flood raster
+        // Load initial flood and WRTC rasters
         if (map.current) {
           const bounds = map.current.getBounds();
           if (bounds) {
             fetchFloodRaster(bounds);
+            fetchWrtcRaster(bounds);
           }
         }
       });
@@ -410,6 +862,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           const bounds = map.current.getBounds();
           if (bounds) {
             fetchFloodRaster(bounds);
+            fetchWrtcRaster(bounds);
           }
         }
       });
@@ -419,6 +872,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           const bounds = map.current.getBounds();
           if (bounds) {
             fetchFloodRaster(bounds);
+            fetchWrtcRaster(bounds);
           }
         }
       });
@@ -430,7 +884,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [address, fetchFloodRaster]);
+  }, [address, fetchFloodRaster, fetchWrtcRaster]);
 
   const recenterMap = useCallback(() => {
     if (map.current && address) {
@@ -447,10 +901,11 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
       if (map.current) {
         map.current.remove();
       }
-      // Clean up flood layer resources
+      // Clean up layer resources
       cleanupFloodLayer();
+      cleanupWrtcLayer();
     };
-  }, [initializeMap, cleanupFloodLayer]);
+  }, [initializeMap, cleanupFloodLayer, cleanupWrtcLayer]);
 
   // Hide any remaining Mapbox UI elements
   useEffect(() => {
@@ -565,7 +1020,7 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
                             : "hover:shadow-emerald-400/40"
                         }
                         ${
-                          isFloodVisible
+                          isFloodVisible && activeLayer === "flood"
                             ? "text-emerald-300"
                             : "text-neutral-300"
                         }`}
@@ -577,7 +1032,11 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
             onMouseOut={(e) =>
               Object.assign(e.currentTarget.style, buttonStyle)
             }
-            title={isFloodVisible ? "Hide Flood Overlay" : "Show Flood Overlay"}
+            title={
+              isFloodVisible && activeLayer === "flood"
+                ? "Hide Flood Overlay"
+                : "Show Flood Overlay"
+            }
           >
             {isFloodLoading ? (
               <div className="flex items-center">
@@ -589,18 +1048,87 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className={`h-5 w-5 mr-2 transition-colors duration-300 ${
-                    isFloodVisible ? "text-emerald-400" : "text-neutral-400"
+                    isFloodVisible && activeLayer === "flood"
+                      ? "text-emerald-400"
+                      : "text-neutral-400"
                   }`}
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
                   <path
                     fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-3a1 1 0 102 0v- पॉइंटCloudVisualization.tsxf-2a1 1 0 10-2 0v2zm0-6a1 1 0 00-1 1v.01a1 1 0 102 0V8a1 1 0 00-1-1z"
+                    d="M3 6a3 3 0 013-3h8a3 3 0 013 3v8a3 3 0 01-3 3H6a3 3 0 01-3-3V6zm2 8V8h2v6H5zm4-6v6h2V8H9zm4 0v6h2V8h-2z"
                     clipRule="evenodd"
                   />
                 </svg>
-                {isFloodVisible ? "Flood Overlay On" : "Flood Overlay Off"}
+                {isFloodVisible && activeLayer === "flood"
+                  ? "Flood Layer On"
+                  : "Flood Layer"}
+              </>
+            )}
+          </motion.button>
+
+          {/* Toggle WRTC Layer Button */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            onClick={toggleWrtcLayer}
+            disabled={isWrtcLoading}
+            className={`flex items-center justify-center p-3 rounded-lg shadow-lg transition-all duration-300 w-40 h-12 text-sm font-semibold
+                        ${
+                          isWrtcLoading
+                            ? "cursor-not-allowed"
+                            : "hover:shadow-red-400/40"
+                        }
+                        ${
+                          isWrtcVisible && activeLayer === "wrtc"
+                            ? "text-red-300"
+                            : "text-neutral-300"
+                        }`}
+            style={buttonStyle}
+            onMouseOver={(e) =>
+              !isWrtcLoading &&
+              Object.assign(e.currentTarget.style, {
+                ...buttonHoverStyle,
+                backgroundColor: "rgba(239, 68, 68, 0.2)", // Red accent for wildfire
+              })
+            }
+            onMouseOut={(e) =>
+              Object.assign(e.currentTarget.style, buttonStyle)
+            }
+            title={
+              isWrtcVisible && activeLayer === "wrtc"
+                ? "Hide Wildfire Risk"
+                : "Show Wildfire Risk"
+            }
+          >
+            {isWrtcLoading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-400 mr-2"></div>
+                Loading Fire...
+              </div>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-5 w-5 mr-2 transition-colors duration-300 ${
+                    isWrtcVisible && activeLayer === "wrtc"
+                      ? "text-red-400"
+                      : "text-neutral-400"
+                  }`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {isWrtcVisible && activeLayer === "wrtc"
+                  ? "Fire Risk On"
+                  : "Fire Risk"}
               </>
             )}
           </motion.button>

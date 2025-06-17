@@ -2,7 +2,7 @@ import { JobStatus, ProcessingRequest, SatelliteRequest } from "../data/types";
 
 export class PointCloudAPIService {
   private static readonly BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    process.env.NEXT_PUBLIC_API_URL || "http://api.climateriskplan.com";
 
   static async startProcessingJob(
     request: ProcessingRequest
@@ -101,6 +101,38 @@ export class PointCloudAPIService {
     if (!response.ok) {
       throw new Error(
         `Failed to fetch flood data: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return await response.blob();
+  }
+
+  static async fetchWrtcOverhead(
+    state: string,
+    minLon: number,
+    minLat: number,
+    maxLon: number,
+    maxLat: number,
+    width: number = 512,
+    height: number = 512
+  ): Promise<Blob> {
+    const params = new URLSearchParams({
+      state: state,
+      layer: "wildfire_hazard_potential",
+      min_lon: minLon.toString(),
+      min_lat: minLat.toString(),
+      max_lon: maxLon.toString(),
+      max_lat: maxLat.toString(),
+      width: width.toString(),
+      height: height.toString(),
+      colormap: "Reds",
+    });
+
+    const response = await fetch(`${this.BASE_URL}/cog/raster?${params}`);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch WRTC data: ${response.status} ${response.statusText}`
       );
     }
 
