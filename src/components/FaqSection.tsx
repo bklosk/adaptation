@@ -31,12 +31,11 @@ const FaqSection: React.FC<FaqSectionProps> = ({ isAnimatingOut = false }) => {
         <div className="space-y-4 font-comic-neue">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-              What is point cloud visualization?
+              What does this do?
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Point cloud visualization creates 3D representations of
-              geographical areas using elevation data, helping you understand
-              terrain and landscape features in detail.
+              We find things you can change about your home to protect against
+              storms, natural disasters, and climate change.
             </p>
           </div>
           <div>
