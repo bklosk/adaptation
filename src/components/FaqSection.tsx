@@ -1,9 +1,23 @@
 import React from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
-const FaqSection: React.FC = () => {
+interface FaqSectionProps {
+  isAnimatingOut?: boolean;
+}
+
+const FaqSection: React.FC<FaqSectionProps> = ({ isAnimatingOut = false }) => {
   return (
-    <div className="mt-16 flex items-center gap-8">
+    <motion.div
+      className="mt-16 flex items-center gap-8"
+      initial={{ y: 20, opacity: 0 }}
+      animate={isAnimatingOut ? { y: 20, opacity: 0 } : { y: 0, opacity: 1 }}
+      transition={{
+        duration: isAnimatingOut ? 0.6 : 0.8,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        delay: isAnimatingOut ? 0.1 : 0.4,
+      }}
+    >
       <div className="flex-shrink-0">
         <Image
           src="/solarpunk_house.png"
@@ -45,7 +59,7 @@ const FaqSection: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -8,8 +8,6 @@ import { PointCloudAPIService } from "../api/apiService"; // Corrected import pa
 import { PointCloudDataProcessor } from "../data/dataProcessor"; // Corrected import path
 import StatusDisplay, { JobDetails } from "../ui/StatusDisplay"; // Corrected import path
 import { JobStatusString as JobStatus } from "../ui/StatusDisplay"; // Corrected import path
-import PointSizeControl from "../ui/PointSizeControl"; // Corrected import path
-import CameraControls from "../ui/CameraControls"; // Corrected import path
 import KeyboardShortcuts from "../ui/KeyboardShortcuts"; // Corrected import path
 
 interface PointCloudVisualizationProps {
@@ -28,7 +26,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
   const [jobDetails, setJobDetails] = useState<JobDetails | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [pointSize, setPointSize] = useState<number>(1);
+  const pointSize = 1; // Default point size, no longer user-configurable
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [initialBounds, setInitialBounds] = useState<{
     minLon: number;
@@ -241,11 +239,6 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
     }
   }, [pointCloudData, initialBounds]);
 
-  // Handle partial view state updates
-  const handleViewStateUpdate = useCallback((updates: Partial<ViewState>) => {
-    setViewState((prev) => ({ ...prev, ...updates }));
-  }, []);
-
   // Apply reduced sensitivity to DeckGL interactions
   const handleDeckViewStateChange = useCallback(
     (evt: { viewState: ViewState }) => {
@@ -375,10 +368,10 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         position: "relative",
         height: "100%",
         width: "100%",
-        overflow: "hidden",
+        background: "#1f2937", // gray-800 background to show rounded corners
       }}
       tabIndex={0}
-      className="focus:outline-none"
+      className="focus:outline-none bg-gray-900"
     >
       <DeckGL
         viewState={viewState}
@@ -406,13 +399,13 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         </div>
 
         {/* Top right - Camera controls (positioned below centered address to avoid overlap) */}
-        <div className="absolute top-20 right-4 pointer-events-auto hidden lg:block">
+        {/* <div className="absolute top-20 right-4 pointer-events-auto hidden lg:block">
           <CameraControls
             viewState={viewState}
             onViewStateChange={handleViewStateUpdate}
             onResetView={resetView}
           />
-        </div>
+        </div> */}
 
         {/* Bottom left - Status display */}
         <div className="absolute bottom-4 left-4 pointer-events-auto max-w-sm">
@@ -435,17 +428,17 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
         </div>
 
         {/* Bottom right - Point size control */}
-        {!isDownloading && (
+        {/* {!isDownloading && (
           <div className="absolute bottom-4 right-4 pointer-events-auto">
             <PointSizeControl
               pointSize={pointSize}
               onPointSizeChange={setPointSize}
             />
           </div>
-        )}
+        )} */}
 
         {/* Mobile camera controls - toggle button positioned below both address and desktop controls */}
-        <div className="lg:hidden absolute top-32 right-4 pointer-events-auto">
+        {/* <div className="lg:hidden absolute top-32 right-4 pointer-events-auto">
           <button
             onClick={() => {
               const controls = document.getElementById(
@@ -473,10 +466,10 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
               <circle cx="12" cy="13" r="4" />
             </svg>
           </button>
-        </div>
+        </div> */}
 
         {/* Mobile camera controls panel positioned below toggle */}
-        <div
+        {/* <div
           id="mobile-camera-controls"
           className="lg:hidden hidden absolute top-44 right-4 pointer-events-auto"
         >
@@ -485,7 +478,7 @@ const PointCloudVisualization: React.FC<PointCloudVisualizationProps> = ({
             onViewStateChange={handleViewStateUpdate}
             onResetView={resetView}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -43,12 +43,27 @@ export interface StatusDisplayProps {
 
 // Constants
 const STATUS_COLORS: Record<JobStatusString, string> = {
-  completed: "text-green-600",
-  failed: "text-red-600",
-  processing: "text-blue-600",
-  pending: "text-yellow-600",
-  queued: "text-yellow-600",
+  completed: "text-emerald-500 dark:text-emerald-400",
+  failed: "text-red-500 dark:text-red-400",
+  processing: "text-blue-500 dark:text-blue-400",
+  pending: "text-yellow-500 dark:text-yellow-400",
+  queued: "text-amber-500 dark:text-amber-400", // Changed from yellow for differentiation
 } as const;
+
+const STATUS_BG_COLORS: Record<JobStatusString, string> = {
+  completed: "bg-emerald-500/10 dark:bg-emerald-400/10",
+  failed: "bg-red-500/10 dark:bg-red-400/10",
+  processing: "bg-blue-500/10 dark:bg-blue-400/10",
+  pending: "bg-yellow-500/10 dark:bg-yellow-400/10",
+  queued: "bg-amber-500/10 dark:bg-amber-400/10",
+} as const;
+
+const panelStyle = {
+  backdropFilter: "blur(12px) saturate(150%)",
+  WebkitBackdropFilter: "blur(12px) saturate(150%)",
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E\")",
+};
 
 // Utility functions
 const formatElapsedTime = (
@@ -78,12 +93,20 @@ interface StatusIndicatorProps {
 }
 
 const StatusIndicator = ({ status }: StatusIndicatorProps) => (
-  <div className="flex items-center space-x-2">
-    <span className={`font-black ${STATUS_COLORS[status]} font-space-grotesk`}>
+  <div
+    className={`flex items-center space-x-2 p-2 rounded-md ${STATUS_BG_COLORS[status]}`}
+  >
+    <span
+      className={`font-bold ${STATUS_COLORS[status]} font-space-grotesk text-sm`}
+    >
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
     {status === "processing" && (
-      <div className="animate-spin h-3 w-3 border border-blue-600 border-t-transparent" />
+      <div
+        className={`animate-spin h-4 w-4 border-2 ${STATUS_COLORS[
+          status
+        ].replace("text-", "border-")} border-t-transparent rounded-full`}
+      />
     )}
   </div>
 );
@@ -94,197 +117,147 @@ interface ProcessingDetailsProps {
 
 const ProcessingDetails = ({ metadata }: ProcessingDetailsProps) => (
   <div
-    className="p-2 border-2 border-blue-400"
-    style={{ backgroundColor: "#1B2223" }}
+    className="p-3 border border-emerald-300/60 dark:border-emerald-400/40 rounded-lg mt-2 bg-white/60 dark:bg-[#1B2223]/70"
+    style={panelStyle}
   >
-    <div className="font-black text-blue-400 text-xs mb-1 font-space-grotesk">
+    <div className="font-bold text-emerald-600 dark:text-emerald-400 text-xs mb-1 font-space-grotesk">
       Processing Details:
     </div>
-    <div className="space-y-1 text-xs text-gray-300 font-space-grotesk">
-      {metadata.lidar_products_found && (
-        <div className="flex justify-between">
-          <span>LiDAR Products:</span>
-          <span className="font-mono">
-            {metadata.lidar_products_found} files
-          </span>
-        </div>
+    <ul className="text-xs space-y-1 text-neutral-700 dark:text-neutral-300">
+      {metadata.processing_step && <li>Step: {metadata.processing_step}</li>}
+      {metadata.lidar_products_found !== undefined && (
+        <li>LiDAR Products: {metadata.lidar_products_found}</li>
       )}
       {metadata.coordinates && (
-        <div className="flex justify-between">
-          <span>Location:</span>
-          <span className="font-mono text-xs">
-            {formatCoordinates(metadata.coordinates)}
-          </span>
-        </div>
+        <li>Coords: {formatCoordinates(metadata.coordinates)}</li>
       )}
-      {metadata.output_file_size_mb && (
-        <div className="flex justify-between">
-          <span>File Size:</span>
-          <span className="font-mono">{metadata.output_file_size_mb} MB</span>
-        </div>
+      {metadata.output_file_size_mb !== undefined && (
+        <li>Output Size: {metadata.output_file_size_mb.toFixed(2)} MB</li>
       )}
-      {metadata.buffer_km && (
-        <div className="flex justify-between">
-          <span>Search Radius:</span>
-          <span className="font-mono">{metadata.buffer_km} km</span>
-        </div>
+      {metadata.buffer_km !== undefined && (
+        <li>Buffer: {metadata.buffer_km} km</li>
       )}
-      {metadata.attempt && (
-        <div className="flex justify-between">
-          <span>Attempt:</span>
-          <span className="font-mono">#{metadata.attempt}</span>
-        </div>
-      )}
+      {metadata.attempt !== undefined && <li>Attempt: {metadata.attempt}</li>}
+      {metadata.bbox && <li>Bounding Box: {metadata.bbox}</li>}
+    </ul>
+  </div>
+);
+
+interface DownloadProgressProps {
+  progress?: number;
+}
+
+const DownloadProgress = ({ progress }: DownloadProgressProps) => (
+  <div className="mt-2">
+    <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+      Downloading Point Cloud:{" "}
+      {progress !== undefined ? `${progress.toFixed(0)}%` : "Starting..."}
+    </div>
+    <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2.5 overflow-hidden border border-neutral-300 dark:border-neutral-600">
+      <div
+        className="bg-emerald-500 dark:bg-emerald-400 h-2.5 rounded-full transition-all duration-300 ease-out"
+        style={{ width: `${progress || 0}%` }}
+      ></div>
     </div>
   </div>
 );
 
 interface ErrorDisplayProps {
-  errorMessage: string;
+  message: string;
 }
 
-const ErrorDisplay = ({ errorMessage }: ErrorDisplayProps) => (
+const ErrorDisplay = ({ message }: ErrorDisplayProps) => (
   <div
-    className="mt-2 p-2 border-2 border-red-400"
-    style={{ backgroundColor: "#1B2223" }}
+    className="p-3 border border-red-500/60 dark:border-red-400/40 rounded-lg mt-2 bg-red-500/10 dark:bg-red-400/10"
+    style={panelStyle}
   >
-    <div className="font-black text-red-400 text-xs font-space-grotesk">
+    <div className="font-bold text-red-600 dark:text-red-400 text-sm mb-1">
       Error:
     </div>
-    <div className="text-red-300 text-xs mt-1 font-space-grotesk">
-      {errorMessage}
-    </div>
+    <p className="text-xs text-red-700 dark:text-red-300">{message}</p>
   </div>
 );
 
-interface BoundingBoxDisplayProps {
-  bbox: string;
-}
-
-const BoundingBoxDisplay = ({ bbox }: BoundingBoxDisplayProps) => (
-  <div
-    className="p-2 border-2 border-green-400"
-    style={{ backgroundColor: "#1B2223" }}
-  >
-    <div className="font-black text-green-400 text-xs mb-1 font-space-grotesk">
-      Coverage Area:
-    </div>
-    <div className="text-xs text-green-300 font-mono break-all">{bbox}</div>
-  </div>
-);
-
-interface DownloadProgressProps {
-  progress: number;
-  pointCount: number;
-}
-
-const DownloadProgress = ({ progress, pointCount }: DownloadProgressProps) => (
-  <div
-    className="absolute top-4 left-1/2 transform -translate-x-1/2 backdrop-blur-sm p-4 w-80 font-space-grotesk shadow-lg z-10 border-2 border-white"
-    style={{ backgroundColor: "#1B2223" }}
-  >
-    <div className="text-sm font-black text-white mb-2">
-      Downloading Point Cloud Data
-    </div>
-    <div className="text-xs text-gray-300 mb-3">
-      {progress}% complete ({pointCount.toLocaleString()} points)
-    </div>
-    <div className="w-full bg-gray-700 h-2 border border-white">
-      <div
-        className="bg-blue-600 h-full transition-all duration-300 border-r border-blue-400"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  </div>
-);
-
-// Main component
-export default function StatusDisplay({
+const StatusDisplay: React.FC<StatusDisplayProps> = ({
   status,
   pointCount,
-  downloadProgress = 0,
-  isDownloading = false,
+  downloadProgress,
+  isDownloading,
   jobDetails,
-}: StatusDisplayProps) {
-  const elapsedTime = useMemo(() => {
-    if (!jobDetails?.created_at) return null;
-    return formatElapsedTime(jobDetails.created_at, jobDetails.completed_at);
-  }, [jobDetails?.created_at, jobDetails?.completed_at]);
+}) => {
+  const elapsedTime = useMemo(
+    () => formatElapsedTime(jobDetails?.created_at, jobDetails?.completed_at),
+    [jobDetails?.created_at, jobDetails?.completed_at]
+  );
+
+  const currentStatus = jobDetails?.status || status;
 
   return (
-    <>
-      {/* Main status display - no absolute positioning */}
-      <div
-        className="backdrop-blur-sm p-4 font-space-grotesk text-sm shadow-lg border-2 border-white w-full max-w-sm"
-        style={{ backgroundColor: "#1B2223" }}
-      >
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="font-black text-white">Status:</span>
-            <StatusIndicator status={status} />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="font-black text-white">Points:</span>
-            <span className="font-black text-white">
-              {pointCount.toLocaleString()}
-            </span>
-          </div>
-
-          {jobDetails && (
-            <>
-              {jobDetails.job_id && (
-                <div className="flex justify-between items-center">
-                  <span className="font-black text-white">Job ID:</span>
-                  <span
-                    className="font-mono text-xs text-gray-300"
-                    title={jobDetails.job_id}
-                  >
-                    {jobDetails.job_id.slice(-8)}
-                  </span>
-                </div>
-              )}
-
-              {elapsedTime && (
-                <div className="flex justify-between items-center">
-                  <span className="font-black text-white">Elapsed:</span>
-                  <span className="font-black text-white">{elapsedTime}</span>
-                </div>
-              )}
-
-              {jobDetails.metadata?.processing_step &&
-                status === "processing" && (
-                  <div className="flex justify-between items-center">
-                    <span className="font-black text-white">Step:</span>
-                    <span className="font-black text-blue-400 capitalize">
-                      {jobDetails.metadata.processing_step.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                )}
-
-              {jobDetails.error_message && (
-                <ErrorDisplay errorMessage={jobDetails.error_message} />
-              )}
-
-              {jobDetails.metadata &&
-                Object.keys(jobDetails.metadata).length > 0 &&
-                status !== "completed" && (
-                  <div className="mt-2 space-y-2">
-                    <ProcessingDetails metadata={jobDetails.metadata} />
-                    {jobDetails.metadata.bbox && (
-                      <BoundingBoxDisplay bbox={jobDetails.metadata.bbox} />
-                    )}
-                  </div>
-                )}
-            </>
+    <div
+      className={`p-4 shadow-lg font-space-grotesk border rounded-2xl w-full max-w-md 
+                  ${STATUS_BG_COLORS[currentStatus]} 
+                  ${
+                    currentStatus === "failed"
+                      ? "border-red-500/60 dark:border-red-400/60"
+                      : "border-emerald-300/60 dark:border-emerald-400/40"
+                  } 
+                  text-neutral-800 dark:text-neutral-200`}
+      style={panelStyle}
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">
+            Point Cloud Status
+          </h2>
+          {jobDetails?.address && (
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate max-w-xs">
+              {jobDetails.address}
+            </p>
           )}
         </div>
+        <StatusIndicator status={currentStatus} />
       </div>
 
-      {/* Download progress */}
-      {isDownloading && (
-        <DownloadProgress progress={downloadProgress} pointCount={pointCount} />
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-neutral-600 dark:text-neutral-400">
+            Points Loaded:
+          </span>
+          <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+            {pointCount > 0 ? pointCount.toLocaleString() : "-"}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-neutral-600 dark:text-neutral-400">
+            Elapsed Time:
+          </span>
+          <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+            {elapsedTime}
+          </span>
+        </div>
+        {jobDetails?.job_id && (
+          <div className="flex justify-between">
+            <span className="text-neutral-600 dark:text-neutral-400">
+              Job ID:
+            </span>
+            <span className="font-mono text-xs text-neutral-500 dark:text-neutral-400 truncate">
+              {jobDetails.job_id}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {isDownloading && <DownloadProgress progress={downloadProgress} />}
+
+      {currentStatus === "failed" && jobDetails?.error_message && (
+        <ErrorDisplay message={jobDetails.error_message} />
       )}
-    </>
+
+      {currentStatus === "processing" && jobDetails?.metadata && (
+        <ProcessingDetails metadata={jobDetails.metadata} />
+      )}
+    </div>
   );
-}
+};
+
+export default StatusDisplay;

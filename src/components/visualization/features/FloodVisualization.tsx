@@ -114,7 +114,7 @@ const FloodVisualization: React.FC<FloodVisualizationProps> = ({
 
   return (
     <div
-      className="h-full w-full flex flex-col"
+      className="h-full w-full flex flex-col rounded-3xl overflow-hidden"
       style={{ backgroundColor: "#1B2223" }}
     >
       {/* Header */}

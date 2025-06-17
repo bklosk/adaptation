@@ -23,6 +23,30 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const floodImageUrl = useRef<string | null>(null);
 
+  // Style for panels and buttons, consistent with LocationForm
+  const panelStyle = {
+    backdropFilter: "blur(10px) saturate(180%)",
+    WebkitBackdropFilter: "blur(10px) saturate(180%)",
+    backgroundColor: "rgba(23, 23, 23, 0.75)", // Darker, less transparent background
+    border: "1px solid rgba(56, 189, 125, 0.4)", // Emerald border, less opaque
+    borderRadius: "0.75rem", // Consistent rounded corners
+    color: "#E5E7EB", // Light gray text for better contrast
+    fontFamily: '"Space Grotesk", sans-serif',
+  };
+
+  const buttonStyle = {
+    ...panelStyle, // Inherit panel styling for consistency
+    padding: "0.5rem 1rem",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    transition:
+      "background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+  };
+
+  const buttonHoverStyle = {
+    backgroundColor: "rgba(56, 189, 125, 0.2)", // Emerald accent on hover
+    boxShadow: "0 6px 8px rgba(0, 0, 0, 0.15)",
+  };
+
   // Clean up flood layer and source
   const cleanupFloodLayer = useCallback(() => {
     if (!map.current) return;
@@ -289,6 +313,20 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
   const initializeMap = useCallback(async () => {
     if (!address || !mapContainer.current) return;
 
+    // Ensure map container is empty before initializing
+    if (map.current && typeof map.current.remove === "function") {
+      // Check if map.current exists and has a remove method
+      map.current.remove();
+      map.current = null;
+    }
+    // Clear previous map container children if any from previous initializations
+    // This helps prevent Mapbox GL JS errors on hot reload or re-renders
+    if (mapContainer.current) {
+      while (mapContainer.current.firstChild) {
+        mapContainer.current.removeChild(mapContainer.current.firstChild);
+      }
+    }
+
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
     if (!token) {
@@ -323,6 +361,16 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
         logoPosition: "bottom-right", // Position logo (we'll hide it with CSS)
       });
 
+      // Apply border radius to the map canvas
+      if (mapContainer.current) {
+        const canvas = mapContainer.current.querySelector(
+          ".mapboxgl-canvas"
+        ) as HTMLElement;
+        if (canvas) {
+          canvas.style.borderRadius = "1.5rem";
+        }
+      }
+
       // Remove the Mapbox logo and load flood raster
       map.current.on("load", () => {
         const logo = document.querySelector(
@@ -330,6 +378,21 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
         ) as HTMLElement;
         if (logo) {
           logo.style.display = "none";
+        }
+
+        // Force border radius on all map elements
+        if (mapContainer.current) {
+          const canvas = mapContainer.current.querySelector(
+            ".mapboxgl-canvas"
+          ) as HTMLElement;
+          if (canvas) {
+            canvas.style.borderRadius = "1.5rem";
+            canvas.style.clipPath = "inset(0 round 1.5rem)";
+          }
+
+          // Apply to the entire map container
+          mapContainer.current.style.borderRadius = "1.5rem";
+          mapContainer.current.style.overflow = "hidden";
         }
 
         // Load initial flood raster
@@ -369,6 +432,13 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
     }
   }, [address, fetchFloodRaster]);
 
+  const recenterMap = useCallback(() => {
+    if (map.current && address) {
+      // Re-initialize the map, which includes geocoding and centering
+      initializeMap();
+    }
+  }, [initializeMap, address]);
+
   useEffect(() => {
     initializeMap();
 
@@ -398,158 +468,173 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           (el as HTMLElement).style.display = "none";
         });
       });
+
+      // Force border radius on canvas elements
+      const canvasElements = document.querySelectorAll(".mapboxgl-canvas");
+      canvasElements.forEach((canvas) => {
+        (canvas as HTMLElement).style.borderRadius = "1.5rem";
+      });
     };
 
     const timer = setTimeout(hideMapboxUI, 100);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleRetry = () => {
-    initializeMap();
-  };
-
   return (
-    <div
-      className="h-full w-full flex flex-col"
-      style={{ backgroundColor: "#1B2223" }}
-    >
-      {/* Header */}
-      <div
-        className="p-4 shadow-sm border-b-2 border-white"
-        style={{ backgroundColor: "#1B2223" }}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <AnimatePresence mode="wait">
-            <motion.h2
-              key={isFloodVisible ? "flood" : "satellite"}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
-              className="text-lg font-black text-white font-space-grotesk"
-            >
-              {isFloodVisible ? "Flood Risk" : "Satellite View"}
-            </motion.h2>
-          </AnimatePresence>
-          <button
-            onClick={toggleFloodLayer}
-            className={`px-2 py-1 text-xs rounded transition-colors border font-space-grotesk ${
-              isFloodVisible
-                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
-            }`}
+    <div className="relative h-full w-full font-space-grotesk bg-gray-800 dark:bg-gray-900">
+      <div ref={mapContainer} className="h-full w-full" />
+
+      {/* CSS to force Mapbox canvas to respect rounded corners */}
+      <style jsx>{`
+        .mapboxgl-canvas {
+          border-radius: 1.5rem !important;
+        }
+        .mapboxgl-map {
+          border-radius: 1.5rem !important;
+          overflow: hidden !important;
+        }
+      `}</style>
+
+      {/* Loading and Error States Overlay */}
+      <AnimatePresence>
+        {(isLoading || error) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center p-4 z-10"
+            style={{
+              ...panelStyle,
+              backgroundColor: "rgba(17, 24, 39, 0.85)", // Darker overlay
+              borderRadius: "1.5rem", // Match parent's rounded-3xl
+            }}
           >
-            {isFloodVisible ? "Hide" : "Show"} Flood
-          </button>
-        </div>
-        <p className="text-sm text-gray-300 truncate font-space-grotesk">
-          {address}
-        </p>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 relative overflow-hidden">
-        {(isLoading || isFloodLoading) && (
-          <div
-            className="absolute inset-0 flex items-center justify-center z-10"
-            style={{ backgroundColor: "#1B2223" }}
-          >
-            <div className="text-center">
-              <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent mx-auto mb-4" />
-              <p className="text-gray-300 font-space-grotesk">
-                {isLoading
-                  ? "Loading satellite view..."
-                  : "Loading flood data..."}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div
-            className="absolute inset-0 flex items-center justify-center z-10"
-            style={{ backgroundColor: "#1B2223" }}
-          >
-            <div className="text-center p-6">
-              <div className="text-red-400 mb-4">
-                <svg
-                  className="h-12 w-12 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2 font-space-grotesk">
-                Failed to load satellite view
-              </h3>
-              <p className="text-gray-300 mb-4 max-w-md font-space-grotesk">
-                {error}
-              </p>
-              <button
-                onClick={handleRetry}
-                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors border-2 border-blue-600 font-space-grotesk font-black"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Map Container */}
-        <div
-          ref={mapContainer}
-          className="h-full w-full"
-          style={{
-            // Hide any remaining Mapbox UI elements
-            filter: "none",
-          }}
-        />
-      </div>
-
-      {/* Controls */}
-      {!isLoading && !error && (
-        <div
-          className="p-3 border-t-2 border-white flex justify-between items-center"
-          style={{ backgroundColor: "#1B2223" }}
-        >
-          <div className="flex items-center space-x-4">
-            <div className="text-xs text-gray-300 font-space-grotesk">
-              Satellite imagery for location
-            </div>
-            {isFloodLoading && (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin h-3 w-3 border border-blue-400 border-t-transparent" />
-                <span className="text-xs text-blue-400 font-space-grotesk">
-                  Loading flood data
-                </span>
+            {isLoading && (
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-emerald-500 mb-4"></div>
+                <p className="text-lg font-semibold text-neutral-100">
+                  Initializing Satellite View...
+                </p>
+                <p className="text-sm text-neutral-300">
+                  Fetching map data for {address}
+                </p>
               </div>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={toggleFloodLayer}
-              className={`px-3 py-1 text-xs transition-colors border font-space-grotesk ${
-                isFloodVisible
-                  ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                  : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
-              }`}
+            {error && (
+              <div className="text-center max-w-md p-6 bg-red-700/30 rounded-lg border border-red-500">
+                <h3 className="text-xl font-bold text-red-300 mb-2">
+                  Map Error
+                </h3>
+                <p className="text-sm text-red-200 mb-4">{error}</p>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    initializeMap();
+                  }}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors font-semibold text-sm"
+                  style={buttonStyle}
+                  onMouseOver={(e) =>
+                    Object.assign(e.currentTarget.style, buttonHoverStyle)
+                  }
+                  onMouseOut={(e) =>
+                    Object.assign(e.currentTarget.style, buttonStyle)
+                  }
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Controls Overlay - only show if map is loaded and no error */}
+      {!isLoading && !error && map.current && (
+        <div className="absolute top-3 right-3 z-10 flex flex-col space-y-2 items-end">
+          {/* Toggle Flood Layer Button */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            onClick={toggleFloodLayer}
+            disabled={isFloodLoading}
+            className={`flex items-center justify-center p-3 rounded-lg shadow-lg transition-all duration-300 w-40 h-12 text-sm font-semibold
+                        ${
+                          isFloodLoading
+                            ? "cursor-not-allowed"
+                            : "hover:shadow-emerald-400/40"
+                        }
+                        ${
+                          isFloodVisible
+                            ? "text-emerald-300"
+                            : "text-neutral-300"
+                        }`}
+            style={buttonStyle}
+            onMouseOver={(e) =>
+              !isFloodLoading &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseOut={(e) =>
+              Object.assign(e.currentTarget.style, buttonStyle)
+            }
+            title={isFloodVisible ? "Hide Flood Overlay" : "Show Flood Overlay"}
+          >
+            {isFloodLoading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-emerald-400 mr-2"></div>
+                Loading Flood...
+              </div>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-5 w-5 mr-2 transition-colors duration-300 ${
+                    isFloodVisible ? "text-emerald-400" : "text-neutral-400"
+                  }`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-3a1 1 0 102 0v- पॉइंटCloudVisualization.tsxf-2a1 1 0 10-2 0v2zm0-6a1 1 0 00-1 1v.01a1 1 0 102 0V8a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {isFloodVisible ? "Flood Overlay On" : "Flood Overlay Off"}
+              </>
+            )}
+          </motion.button>
+
+          {/* Re-center Map Button */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={recenterMap}
+            className="flex items-center justify-center p-3 rounded-lg shadow-lg transition-all duration-300 w-40 h-12 text-sm font-semibold text-neutral-300 hover:shadow-emerald-400/40"
+            style={buttonStyle}
+            onMouseOver={(e) =>
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseOut={(e) =>
+              Object.assign(e.currentTarget.style, buttonStyle)
+            }
+            title="Re-center Map"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2 text-neutral-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
             >
-              {isFloodVisible ? "Hide" : "Show"} Flood
-            </button>
-            <button
-              onClick={handleRetry}
-              className="px-3 py-1 text-xs bg-gray-700 text-white hover:bg-gray-600 transition-colors border border-white font-space-grotesk"
-            >
-              Refresh
-            </button>
-          </div>
+              <path
+                fillRule="evenodd"
+                d="M5.05 14.95A7 7 0 1114.95 5.05 7 7 0 015.05 14.95zM10 4a6 6 0 100 12A6 6 0 0010 4zm0 2a1 1 0 011 1v2.586l1.707-1.707a1 1 0 111.414 1.414L11.414 10l2.707 2.707a1 1 0 11-1.414 1.414L10 11.414l-2.707 2.707a1 1 0 11-1.414-1.414L8.586 10 5.879 7.293a1 1 0 011.414-1.414L10 8.586V7a1 1 0 011-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Re-center Map
+          </motion.button>
         </div>
       )}
     </div>

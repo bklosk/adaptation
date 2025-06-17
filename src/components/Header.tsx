@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <motion.header
-      className="fixed top-4 left-1/2 transform -translate-x-1/2 w-[85%] max-w-4xl min-w-[320px] z-50 rounded-2xl backdrop-blur-md bg-white/20 dark:bg-[#1B2223]/30 overflow-hidden font-space-grotesk border border-white/10 dark:border-white/5"
+      className="fixed top-4 left-1/2 transform -translate-x-1/2 w-[85%] max-w-4xl min-w-[320px] z-50 rounded-3xl backdrop-blur-md bg-white/20 dark:bg-[#1B2223]/30 overflow-hidden font-space-grotesk border border-white/10 dark:border-white/5"
       style={{
         backdropFilter: "blur(12px) saturate(150%)",
         WebkitBackdropFilter: "blur(12px) saturate(150%)",

@@ -1,64 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 
 interface LocationFormProps {
   onSubmit: (address: string, bufferKm: number) => void;
   isLoading?: boolean;
   initialAddress?: string;
   initialBufferKm?: number;
-}
-
-// Simple SVG icons as components for better browser compatibility
-const MapPinIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className || "h-5 w-5 text-blue-600"}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-    />
-  </svg>
-);
-
-const CogIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className || "h-4 w-4"}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-    />
-  </svg>
-);
-
-interface LocationFormProps {
-  onSubmit: (address: string, bufferKm: number) => void;
-  isLoading?: boolean;
-  initialAddress?: string;
-  initialBufferKm?: number;
+  isAnimatingOut?: boolean;
 }
 
 const LocationForm: React.FC<LocationFormProps> = ({
@@ -66,10 +16,9 @@ const LocationForm: React.FC<LocationFormProps> = ({
   isLoading = false,
   initialAddress = "",
   initialBufferKm = 1.0,
+  isAnimatingOut = false,
 }) => {
   const [address, setAddress] = useState(initialAddress);
-  const [bufferKm, setBufferKm] = useState(initialBufferKm);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [addressError, setAddressError] = useState("");
 
   const validateAddress = (addr: string): boolean => {
@@ -89,7 +38,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateAddress(address)) {
-      onSubmit(address.trim(), bufferKm);
+      onSubmit(address.trim(), initialBufferKm);
     }
   };
 
@@ -102,129 +51,100 @@ const LocationForm: React.FC<LocationFormProps> = ({
   };
 
   return (
-    <div
-      className="shadow-lg p-6 max-w-md mx-auto border-2 border-white"
-      style={{ backgroundColor: "#1B2223" }}
-    >
-      <h2 className="text-xl font-black text-white mb-4 flex items-center gap-2 font-space-grotesk">
-        <MapPinIcon className="h-5 w-5 text-blue-400" />
-        Location Settings
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label
-            htmlFor="address"
-            className="block text-sm font-bold text-white mb-2 font-space-grotesk"
-          >
-            Address
-          </label>
-          <input
-            type="text"
-            id="address"
-            value={address}
-            onChange={handleAddressChange}
-            placeholder="Enter an address (e.g., 1250 Wildwood Road, Boulder, CO)"
-            className={`w-full px-3 py-2 border-2 shadow-sm focus:outline-none transition-colors font-space-grotesk ${
-              addressError
-                ? "border-red-400 focus:border-red-500 bg-red-50"
-                : "border-white focus:border-blue-400 bg-white"
-            }`}
-            disabled={isLoading}
-            required
-          />
-          {addressError && (
-            <p className="mt-1 text-sm text-red-400 font-space-grotesk">
-              {addressError}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors font-space-grotesk"
-          >
-            <CogIcon className="h-4 w-4" />
-            Advanced Settings
-            <span
-              className={`transform transition-transform duration-200 ${
-                showAdvanced ? "rotate-90" : ""
-              }`}
-            >
-              ➤
-            </span>
-          </button>
-        </div>
-
-        {showAdvanced && (
-          <div className="border-t-2 border-white pt-4">
+    <div className="relative w-full max-w-2xl mx-auto">
+      <motion.div
+        className="rounded-2xl backdrop-blur-md bg-white/25 dark:bg-[#1B2223]/35 border-2 border-emerald-300/60 dark:border-emerald-400/40 p-8 font-space-grotesk"
+        style={{
+          backdropFilter: "blur(12px) saturate(150%)",
+          WebkitBackdropFilter: "blur(12px) saturate(150%)",
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E\")",
+        }}
+        initial={{ y: 20, opacity: 0 }}
+        animate={isAnimatingOut ? { y: 20, opacity: 0 } : { y: 0, opacity: 1 }}
+        transition={{
+          duration: isAnimatingOut ? 0.6 : 0.8,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          delay: isAnimatingOut ? 0 : 0.2,
+        }}
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative">
             <label
-              htmlFor="bufferKm"
-              className="block text-sm font-bold text-white mb-2 font-space-grotesk"
+              htmlFor="address"
+              className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3"
             >
-              Search Radius (km)
+              Address
             </label>
-            <input
-              type="number"
-              id="bufferKm"
-              value={bufferKm}
-              onChange={(e) => setBufferKm(parseFloat(e.target.value) || 0)}
-              min="0.1"
-              max="10"
-              step="0.1"
-              className="w-full px-3 py-2 border-2 border-white shadow-sm focus:outline-none focus:border-blue-400 bg-white font-space-grotesk"
-              disabled={isLoading}
-            />
-            <p className="text-xs text-gray-300 mt-1 font-space-grotesk">
-              Area around the address to search for point cloud data
-            </p>
+            <div className="relative">
+              <input
+                type="text"
+                id="address"
+                value={address}
+                onChange={handleAddressChange}
+                placeholder="1250 Wildwood Road, Boulder, CO"
+                className={`w-full pr-20 pl-3 py-2 rounded-xl border-2 focus:outline-none transition-all duration-300 font-space-grotesk text-base backdrop-blur-sm ${
+                  addressError
+                    ? "border-red-400 focus:border-red-500 bg-red-50/80 dark:bg-red-900/20"
+                    : "border-white/30 focus:border-emerald-400 bg-white/60 dark:bg-white/10 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                }`}
+                disabled={isLoading}
+                required
+              />
+              <motion.button
+                type="submit"
+                disabled={
+                  isLoading || !address.trim() || address.trim().length < 5
+                }
+                className="absolute right-0 top-0 bottom-0 bg-emerald-500 hover:bg-emerald-600 text-white px-4 rounded-r-xl focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold text-sm"
+              >
+                {isLoading ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                ) : (
+                  "Go"
+                )}
+              </motion.button>
+            </div>
+            {addressError && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 text-sm text-red-500 dark:text-red-400"
+              >
+                {addressError}
+              </motion.p>
+            )}
           </div>
-        )}
+        </form>
 
-        <button
-          type="submit"
-          disabled={isLoading || !address.trim() || address.trim().length < 5}
-          className="w-full bg-blue-600 text-white py-2 px-4 hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-2 border-blue-600 font-space-grotesk font-black"
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <div className="animate-spin h-4 w-4 border-b-2 border-white"></div>
-              Processing...
-            </span>
-          ) : (
-            "Generate Point Cloud"
-          )}
-        </button>
-      </form>
-
-      <div className="mt-4 text-xs text-gray-300 font-space-grotesk">
-        <p>
-          <strong>Quick Examples:</strong>
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {[
-            "1250 Wildwood Road, Boulder, CO",
-            "Central Park, New York, NY",
-            "Golden Gate Bridge, San Francisco, CA",
-            "Space Needle, Seattle, WA",
-          ].map((example) => (
-            <button
-              key={example}
-              type="button"
-              onClick={() => {
-                setAddress(example);
-                setAddressError("");
-              }}
-              disabled={isLoading}
-              className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 border border-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-space-grotesk"
-            >
-              {example.split(",")[0]}
-            </button>
-          ))}
+        <div className="mt-6 text-xs text-gray-600 dark:text-gray-400">
+          <p className="font-bold mb-3 text-center">Try these examples:</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {[
+              "1250 Wildwood Road, Boulder, CO",
+              "Central Park, New York, NY",
+              "Golden Gate Bridge, San Francisco, CA",
+              "Space Needle, Seattle, WA",
+            ].map((example) => (
+              <motion.button
+                key={example}
+                type="button"
+                onClick={() => {
+                  setAddress(example);
+                  setAddressError("");
+                }}
+                disabled={isLoading}
+                className="text-xs bg-white/30 dark:bg-white/10 hover:bg-white/50 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium border border-white/20 backdrop-blur-sm"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.01 }}
+              >
+                {example.split(",")[0]}
+              </motion.button>
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
