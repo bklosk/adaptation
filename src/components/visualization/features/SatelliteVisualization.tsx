@@ -174,8 +174,8 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
         const latSpan = (bounds.getNorth() - bounds.getSouth()) * 111000;
         const lngSpan = (bounds.getEast() - bounds.getWest()) * metersPerDegree;
 
-        // Use the larger dimension and add some padding
-        const bboxSize = Math.max(latSpan, lngSpan) * 1.2; // 20% padding
+        // Use the larger dimension and add substantial padding for better coverage
+        const bboxSize = Math.max(latSpan, lngSpan) * 2.0; // 100% padding for larger coverage area
 
         console.log("Flood raster request:", {
           center: { lat: center.lat, lng: center.lng },

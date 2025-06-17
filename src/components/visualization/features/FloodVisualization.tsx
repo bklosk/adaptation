@@ -13,7 +13,7 @@ interface FloodVisualizationProps {
 
 const FloodVisualization: React.FC<FloodVisualizationProps> = ({
   address,
-  bboxM = 64.0,
+  bboxM = 128.0,
   resolution = 2048, // 2K resolution as standard
   enableHighRes = true,
 }) => {

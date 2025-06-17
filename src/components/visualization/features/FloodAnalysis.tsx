@@ -149,143 +149,252 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-gray-800 dark:bg-gray-900 text-white p-4">
-      {isLoading && (
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent mx-auto mb-4" />
-            <p className="text-gray-300 font-space-grotesk">
-              Analyzing flood risk with AI...
-            </p>
-          </div>
+    <div className="h-full w-full bg-stone-100 dark:bg-gray-900 font-space-grotesk">
+      <div
+        className="h-full rounded-2xl backdrop-blur-md bg-white/25 dark:bg-[#1B2223]/35 border-2 border-emerald-300/60 dark:border-emerald-400/40 overflow-hidden"
+        style={{
+          backdropFilter: "blur(12px) saturate(150%)",
+          WebkitBackdropFilter: "blur(12px) saturate(150%)",
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E\")",
+        }}
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-emerald-300/30 dark:border-emerald-400/20">
+          <motion.h1
+            className="text-2xl font-black text-emerald-500 dark:text-emerald-400"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            Flood Risk Analysis
+          </motion.h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            AI-powered adaptation strategies for {address}
+          </p>
         </div>
-      )}
 
-      {error && (
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-center p-6">
-            <div className="text-red-400 mb-4">
-              <svg
-                className="h-12 w-12 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        {/* Content Area */}
+        <div className="h-[calc(100%-120px)] flex flex-col">
+          {isLoading && (
+            <div className="flex-grow flex items-center justify-center p-8">
+              <motion.div
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2 font-space-grotesk">
-              Failed to analyze flood risk
-            </h3>
-            <p className="text-gray-300 mb-4 max-w-md font-space-grotesk">
-              {error}
-            </p>
-            <button
-              onClick={handleRetry}
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors border-2 border-blue-600 font-space-grotesk font-black"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Analysis Display */}
-      {analysisData && !isLoading && !error && (
-        <>
-          <div className="overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-            {parsedAnalysis && (
-              <div className="space-y-6 p-1">
-                <div>
-                  <h2 className="text-2xl font-bold text-emerald-400 mb-3 font-space-grotesk">
-                    Flood Adaptation Options
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {parsedAnalysis.interventions.map((item, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-gray-700 p-4 rounded-lg shadow-lg border border-emerald-500/50 hover:shadow-emerald-500/30 transition-shadow duration-300"
-                      >
-                        <div className="flex items-center mb-2">
-                          <span className="text-2xl mr-3">
-                            {getInterventionIcon(item.intervention_name)}
-                          </span>
-                          <h3 className="text-lg font-semibold text-emerald-300 font-space-grotesk">
-                            {item.intervention_name}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-gray-300 mb-1">
-                          {item.placement_description}
-                        </p>
-                        <div className="text-xs space-y-1 mt-2">
-                          <p>
-                            <span className="font-medium text-gray-400">
-                              Cost:
-                            </span>{" "}
-                            {formatCurrency(item.capital_cost_low_usd)} -
-                            {formatCurrency(item.capital_cost_high_usd)}
-                          </p>
-                          <p>
-                            <span className="font-medium text-gray-400">
-                              Maintenance:
-                            </span>{" "}
-                            {formatCurrency(item.annual_maintenance_usd)}/yr
-                          </p>
-                          <div className="flex items-center">
-                            <span className="font-medium text-gray-400">
-                              Risk Reduction:
-                            </span>
-                            <span
-                              className={`ml-2 px-2 py-0.5 text-xs rounded-full text-white ${getRiskReductionColor(
-                                item.risk_reduction_pct
-                              )}`}
-                            >
-                              {item.risk_reduction_pct}%
-                            </span>
-                          </div>
-                        </div>
-                        {item.regulatory_notes && (
-                          <p className="text-xs text-yellow-400 mt-2 italic">
-                            Note: {item.regulatory_notes}
-                          </p>
-                        )}
-                      </motion.div>
-                    ))}
+                <div className="relative mb-6">
+                  <div className="w-16 h-16 mx-auto">
+                    <div className="absolute inset-0 rounded-full border-4 border-emerald-200 dark:border-emerald-800"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin"></div>
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-emerald-400 mb-2 font-space-grotesk">
-                    Key Assumptions
-                  </h3>
-                  <ul className="list-disc list-inside text-xs text-gray-300 space-y-1 bg-gray-700 p-3 rounded-md border border-emerald-500/30">
-                    {parsedAnalysis.assumptions.map((assumption, index) => (
-                      <li key={index}>{assumption}</li>
-                    ))}
-                  </ul>
+                <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Analyzing Flood Risk
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 max-w-xs">
+                  AI is evaluating flood patterns and generating adaptation
+                  strategies...
+                </p>
+              </motion.div>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex-grow flex items-center justify-center p-8">
+              <motion.div
+                className="text-center max-w-md"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3">
+                  Analysis Failed
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm leading-relaxed">
+                  {error}
+                </p>
+                <button
+                  onClick={handleRetry}
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-opacity-50"
+                >
+                  Try Again
+                </button>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Analysis Results */}
+          {analysisData && !isLoading && !error && (
+            <div className="flex-grow overflow-hidden flex flex-col">
+              <div className="flex-grow overflow-y-auto p-6 space-y-6">
+                {parsedAnalysis && (
+                  <>
+                    {/* Interventions Grid */}
+                    <div>
+                      <motion.h2
+                        className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-4"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.6, delay: 0.1 }}
+                      >
+                        Adaptation Strategies
+                      </motion.h2>
+                      <div className="grid grid-cols-1 gap-4">
+                        {parsedAnalysis.interventions.map((item, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              delay: index * 0.1 + 0.2,
+                              duration: 0.5,
+                            }}
+                            className="p-4 rounded-xl bg-white/40 dark:bg-white/5 border border-emerald-200/50 dark:border-emerald-400/20 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="text-2xl mt-1 group-hover:scale-110 transition-transform duration-300">
+                                {getInterventionIcon(item.intervention_name)}
+                              </div>
+                              <div className="flex-grow">
+                                <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                  {item.intervention_name}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
+                                  {item.placement_description}
+                                </p>
+
+                                {/* Cost and Risk Info */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-500">
+                                        Capital Cost:
+                                      </span>
+                                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                                        {formatCurrency(
+                                          item.capital_cost_low_usd
+                                        )}{" "}
+                                        -{" "}
+                                        {formatCurrency(
+                                          item.capital_cost_high_usd
+                                        )}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-500">
+                                        Annual Maintenance:
+                                      </span>
+                                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                                        {formatCurrency(
+                                          item.annual_maintenance_usd
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-center sm:justify-end">
+                                    <div className="text-center">
+                                      <div className="text-xs text-gray-500 dark:text-gray-500 mb-1">
+                                        Risk Reduction
+                                      </div>
+                                      <div
+                                        className={`px-3 py-1 rounded-full text-xs font-bold text-white ${getRiskReductionColor(
+                                          item.risk_reduction_pct
+                                        )}`}
+                                      >
+                                        {item.risk_reduction_pct}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {item.regulatory_notes && (
+                                  <div className="mt-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                      <span className="font-medium">
+                                        Regulatory Note:
+                                      </span>{" "}
+                                      {item.regulatory_notes}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Key Assumptions */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.6 }}
+                    >
+                      <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3">
+                        Key Assumptions
+                      </h3>
+                      <div className="p-4 rounded-xl bg-white/40 dark:bg-white/5 border border-emerald-200/50 dark:border-emerald-400/20">
+                        <ul className="space-y-2">
+                          {parsedAnalysis.assumptions.map(
+                            (assumption, index) => (
+                              <li
+                                key={index}
+                                className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400"
+                              >
+                                <span className="text-emerald-500 mt-1">•</span>
+                                <span>{assumption}</span>
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+
+                {analysisData.message && !parsedAnalysis && (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-gray-600 dark:text-gray-400 text-center">
+                      {analysisData.message}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Info */}
+              <div className="border-t border-emerald-300/30 dark:border-emerald-400/20 p-4">
+                <div className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Model: {analysisData.model || "N/A"}</span>
+                    <span>Tokens: {analysisData.tokens_used || "N/A"}</span>
+                  </div>
+                  <div className="text-center">
+                    Generated:{" "}
+                    {new Date(analysisData.timestamp).toLocaleString()}
+                  </div>
                 </div>
               </div>
-            )}
-            {analysisData.message && !parsedAnalysis && (
-              <div className="text-center text-gray-400 p-4">
-                {analysisData.message}
-              </div>
-            )}
-          </div>
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Analysis based on model: {analysisData.model || "N/A"} | Tokens
-            used: {analysisData.tokens_used || "N/A"} | Generated:
-            {new Date(analysisData.timestamp).toLocaleString()}
-          </div>
-        </>
-      )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

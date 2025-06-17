@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Header from "../components/Header";
 import FaqSection from "../components/FaqSection";
 import {
-  PointCloudVisualization,
   FloodAnalysis,
   SatelliteVisualization,
 } from "../components/visualization";
@@ -13,14 +12,12 @@ import LocationForm from "../components/LocationForm";
 export default function Home() {
   const [showVisualization, setShowVisualization] = useState(false);
   const [currentAddress, setCurrentAddress] = useState("");
-  const [currentBufferKm, setCurrentBufferKm] = useState(1.0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
-  const handleLocationSubmit = (address: string, bufferKm: number) => {
+  const handleLocationSubmit = (address: string) => {
     setCurrentAddress(address);
-    setCurrentBufferKm(bufferKm);
     setIsAnimatingOut(true);
 
     // Wait for animation to complete before showing visualization
@@ -40,9 +37,8 @@ export default function Home() {
     setIsAnimatingOut(false);
   };
 
-  const handleEditSubmit = (address: string, bufferKm: number) => {
+  const handleEditSubmit = (address: string) => {
     setCurrentAddress(address);
-    setCurrentBufferKm(bufferKm);
     setShowEditForm(false);
     setIsProcessing(true);
     // Reset processing state after a brief delay
@@ -94,61 +90,36 @@ export default function Home() {
                     onSubmit={handleEditSubmit}
                     isLoading={isProcessing}
                     initialAddress={currentAddress}
-                    initialBufferKm={currentBufferKm}
+                    initialBufferKm={1.0}
                   />
                 </div>
               </div>
             )}
 
-            {/* Split layout with point cloud on left, satellite and flood risk on right */}
-            <div className="flex h-full p-4 gap-4 pt-2">
-              {/* Point Cloud Visualization - Left Side */}
+            {/* Split layout with flood analysis on left, satellite on right */}
+            <div className="flex flex-col lg:flex-row h-full p-4 gap-4 pt-2">
+              {/* Flood Risk Analysis - Left Side (Desktop) / Top (Mobile) */}
               <div
-                className="w-1/2 h-1/2 relative"
+                className="w-full lg:w-1/2 h-1/2 lg:h-full relative"
                 style={{
                   clipPath: "inset(0 round 1.5rem)",
                   borderRadius: "1.5rem",
                   overflow: "hidden",
                 }}
               >
-                <PointCloudVisualization
-                  address={currentAddress}
-                  bufferKm={currentBufferKm}
-                  initialViewState={{
-                    longitude: -105.2705,
-                    latitude: 40.015,
-                    zoom: 15,
-                    pitch: 60,
-                    bearing: 0,
-                  }}
-                />
+                <FloodAnalysis address={currentAddress} bboxM={64.0} />
               </div>
 
-              {/* Right panel with satellite view and flood risk */}
-              <div className="w-1/2 h-full flex flex-col gap-2">
-                {/* Satellite Visualization - Top Right (Landscape - 3/5 height) */}
-                <div
-                  className="h-3/5 relative"
-                  style={{
-                    clipPath: "inset(0 round 1.5rem)",
-                    borderRadius: "1.5rem",
-                    overflow: "hidden",
-                  }}
-                >
-                  <SatelliteVisualization address={currentAddress} />
-                </div>
-
-                {/* Flood Risk Analysis - Bottom Right (2/5 height) */}
-                <div
-                  className="h-2/5 w-full relative"
-                  style={{
-                    clipPath: "inset(0 round 1.5rem)",
-                    borderRadius: "1.5rem",
-                    overflow: "hidden",
-                  }}
-                >
-                  <FloodAnalysis address={currentAddress} bboxM={64.0} />
-                </div>
+              {/* Satellite Visualization - Right Side (Desktop) / Bottom (Mobile) */}
+              <div
+                className="w-full lg:w-1/2 h-1/2 lg:h-full relative"
+                style={{
+                  clipPath: "inset(0 round 1.5rem)",
+                  borderRadius: "1.5rem",
+                  overflow: "hidden",
+                }}
+              >
+                <SatelliteVisualization address={currentAddress} />
               </div>
             </div>
 

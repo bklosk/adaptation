@@ -40,6 +40,7 @@ const Header: React.FC<HeaderProps> = ({
         backdropFilter: "blur(12px) saturate(150%)",
         WebkitBackdropFilter: "blur(12px) saturate(150%)",
         boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+        borderRadius: "24px !important", // Override global border-radius: 0 rule
         // Adding a subtle noise pattern as a background image
         backgroundImage:
           "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E\")",
@@ -118,6 +119,7 @@ const Header: React.FC<HeaderProps> = ({
             backdropFilter: "blur(12px) saturate(150%)",
             WebkitBackdropFilter: "blur(12px) saturate(150%)",
             boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+            borderRadius: "0 0 16px 16px !important", // Override global border-radius: 0 rule for bottom corners
             // Adding a subtle noise pattern as a background image
             backgroundImage:
               "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E\")",
