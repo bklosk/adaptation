@@ -57,7 +57,7 @@ export default function Home() {
               <LocationForm
                 onSubmit={handleLocationSubmit}
                 isLoading={isProcessing}
-                initialAddress="1250 Wildwood Road, Boulder, CO"
+                initialAddress="1340 E 55th st, Chicago, IL"
                 initialBufferKm={1.0}
                 isAnimatingOut={isAnimatingOut}
               />
