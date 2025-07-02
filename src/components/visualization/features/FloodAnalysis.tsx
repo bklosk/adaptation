@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 
 interface FloodAnalysisProps {
   address: string;
@@ -59,7 +60,6 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
   };
 
   // Helper function to get intervention icon
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getInterventionIcon = (name: string): string => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("rain garden") || lowerName.includes("bioswale"))
@@ -184,19 +184,11 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="relative mb-6">
-                  <div className="w-16 h-16 mx-auto">
-                    <div className="absolute inset-0 rounded-full border-4 border-emerald-200 dark:border-emerald-800"></div>
-                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin"></div>
-                  </div>
-                </div>
-                <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Analyzing Flood Risk
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-xs">
-                  AI is evaluating flood patterns and generating adaptation
-                  strategies...
-                </p>
+                <LoadingSpinner
+                  size="xl"
+                  color="emerald"
+                  text="AI is evaluating flood patterns and generating adaptation strategies..."
+                />
               </motion.div>
             </div>
           )}

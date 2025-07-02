@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import LoadingSpinner from "./ui/LoadingSpinner";
 
 interface LocationFormProps {
   onSubmit: (address: string, bufferKm: number) => void;
@@ -98,11 +99,7 @@ const LocationForm: React.FC<LocationFormProps> = ({
                 }
                 className="absolute right-0 top-0 bottom-0 bg-emerald-500 hover:bg-emerald-600 text-white px-4 rounded-r-xl focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold text-sm"
               >
-                {isLoading ? (
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                ) : (
-                  "Go"
-                )}
+                {isLoading ? <LoadingSpinner size="sm" color="white" /> : "Go"}
               </motion.button>
             </div>
             {addressError && (

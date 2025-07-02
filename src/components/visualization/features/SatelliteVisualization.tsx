@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { motion, AnimatePresence } from "framer-motion";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 
 interface SatelliteVisualizationProps {
   address: string;
@@ -965,15 +966,11 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
             }}
           >
             {isLoading && (
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-emerald-500 mb-4"></div>
-                <p className="text-lg font-semibold text-neutral-100">
-                  Initializing Satellite View...
-                </p>
-                <p className="text-sm text-neutral-300">
-                  Fetching map data for {address}
-                </p>
-              </div>
+              <LoadingSpinner
+                size="xl"
+                color="emerald"
+                text={`Initializing Satellite View... Fetching map data for ${address}`}
+              />
             )}
             {error && (
               <div className="text-center max-w-md p-6 bg-red-700/30 rounded-lg border border-red-500">
@@ -1040,7 +1037,9 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           >
             {isFloodLoading ? (
               <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-emerald-400 mr-2"></div>
+                <div className="mr-2">
+                  <LoadingSpinner size="sm" color="emerald" />
+                </div>
                 Loading Flood...
               </div>
             ) : (
@@ -1105,7 +1104,9 @@ const SatelliteVisualization: React.FC<SatelliteVisualizationProps> = ({
           >
             {isWrtcLoading ? (
               <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-400 mr-2"></div>
+                <div className="mr-2">
+                  <LoadingSpinner size="sm" color="red" />
+                </div>
                 Loading Fire...
               </div>
             ) : (

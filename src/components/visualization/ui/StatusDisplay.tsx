@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 
 // Types
 export type JobStatusString =
@@ -101,13 +102,7 @@ const StatusIndicator = ({ status }: StatusIndicatorProps) => (
     >
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
-    {status === "processing" && (
-      <div
-        className={`animate-spin h-4 w-4 border-2 ${STATUS_COLORS[
-          status
-        ].replace("text-", "border-")} border-t-transparent rounded-full`}
-      />
-    )}
+    {status === "processing" && <LoadingSpinner size="sm" color="blue" />}
   </div>
 );
 

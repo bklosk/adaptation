@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 
 interface FloodAnalysisProps {
   address: string;
@@ -104,12 +105,11 @@ const FloodAnalysis: React.FC<FloodAnalysisProps> = ({
             className="absolute inset-0 flex items-center justify-center z-10"
             style={{ backgroundColor: "#1B2223" }}
           >
-            <div className="text-center">
-              <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent mx-auto mb-4" />
-              <p className="text-gray-300 font-space-grotesk">
-                Analyzing flood risk with AI...
-              </p>
-            </div>
+            <LoadingSpinner
+              size="lg"
+              color="blue"
+              text="Analyzing flood risk with AI..."
+            />
           </div>
         )}
 

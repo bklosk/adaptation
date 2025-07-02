@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 import { PointCloudAPIService } from "../api/apiService";
 
 interface FloodVisualizationProps {
@@ -137,19 +138,18 @@ const FloodVisualization: React.FC<FloodVisualizationProps> = ({
             className="absolute inset-0 flex items-center justify-center z-10"
             style={{ backgroundColor: "#1B2223" }}
           >
-            <div className="text-center">
-              <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent mx-auto mb-4" />
-              <p className="text-gray-300 font-space-grotesk">
-                Generating ultra-high resolution flood risk data...
-              </p>
-              {estimatedTimeLeft && (
-                <div className="mt-2 text-sm text-gray-400 font-space-grotesk">
-                  Estimated time: {Math.ceil(estimatedTimeLeft / 1000)}s
-                </div>
-              )}
-              <div className="mt-3 text-xs text-gray-500 font-space-grotesk">
-                Resolution: {currentResolution}×{currentResolution}px
+            <LoadingSpinner
+              size="lg"
+              color="blue"
+              text="Generating ultra-high resolution flood risk data..."
+            />
+            {estimatedTimeLeft && (
+              <div className="mt-4 text-sm text-gray-400 font-space-grotesk">
+                Estimated time: {Math.ceil(estimatedTimeLeft / 1000)}s
               </div>
+            )}
+            <div className="mt-3 text-xs text-gray-500 font-space-grotesk">
+              Resolution: {currentResolution}×{currentResolution}px
             </div>
           </div>
         )}
